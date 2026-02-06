@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Rust SDK for Perceptron models"
 license = "MIT"
+repository = "https://github.com/perceptron-ai-inc/perceptron-rs"
 
 [dependencies]
 reqwest = { version = "0.13.1", features = ["json"] }
