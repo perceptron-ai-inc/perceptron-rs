@@ -47,27 +47,27 @@ impl OutputFormat {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct AnalyzeImageRequest {
-    /// The model to use.
+    /// Model to use for the request.
     pub model: String,
-    /// The user message/prompt to send.
+    /// User message or prompt to send.
     pub message: String,
-    /// Image URL for multimodal requests.
+    /// URL of the image to analyze.
     pub image_url: String,
-    /// Output format: Text (default), Point, Box, or Polygon.
+    /// Output format for the response.
     pub output_format: OutputFormat,
-    /// Enable chain-of-thought reasoning.
+    /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
     pub top_p: Option<f32>,
-    /// Top-k sampling.
+    /// Top-k sampling value.
     pub top_k: Option<u32>,
     /// Frequency penalty.
     pub frequency_penalty: Option<f32>,
     /// Presence penalty.
     pub presence_penalty: Option<f32>,
-    /// Maximum number of completion tokens to generate.
+    /// Maximum number of tokens to generate.
     pub max_completion_tokens: Option<u32>,
 }
 
