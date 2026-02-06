@@ -7,10 +7,10 @@ Get an API key at https://platform.perceptron.inc
 ## Usage
 
 ```rust
-use perceptron::{PerceptronClient, AnalyzeImageRequest, OutputFormat};
+use perceptron_ai::{PerceptronClient, AnalyzeImageRequest, OutputFormat};
 
 #[tokio::main]
-async fn main() -> Result<(), perceptron::PerceptronError> {
+async fn main() -> Result<(), perceptron_ai::PerceptronError> {
     let client = PerceptronClient::new()
         .api_key("my-api-key");
 

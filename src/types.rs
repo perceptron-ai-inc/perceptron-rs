@@ -40,16 +40,6 @@ impl OutputFormat {
 ///
 /// Use [`AnalyzeImageRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
-///
-/// # Example
-/// ```no_run
-/// use perceptron::{AnalyzeImageRequest, OutputFormat};
-///
-/// let request = AnalyzeImageRequest::new("model-name", "Describe this image", "https://example.com/image.jpg")
-///     .output_format(OutputFormat::Point)
-///     .reasoning(true)
-///     .temperature(0.7);
-/// ```
 #[derive(Debug, Clone)]
 pub struct AnalyzeImageRequest {
     /// The model to use.
