@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Output format for model responses.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum OutputFormat {
     /// Plain text response (default).
@@ -41,7 +43,7 @@ impl OutputFormat {
 ///
 /// Use [`AnalyzeImageRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct AnalyzeImageRequest {
     /// The model to use.
@@ -136,7 +138,7 @@ impl AnalyzeImageRequest {
 }
 
 /// Result of an image analysis request.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct AnalyzeImageResponse {
     /// The main response content from the model.
