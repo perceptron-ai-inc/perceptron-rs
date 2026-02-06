@@ -1,5 +1,5 @@
 mod client;
-mod error;
+pub(crate) mod error;
 mod types;
 
 pub use client::ChatCompletionsClient;
