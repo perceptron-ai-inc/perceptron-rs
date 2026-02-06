@@ -1,0 +1,101 @@
+name: Rust
+
+on:
+  pull_request:
+    paths:
+      - "**/*.rs"
+      - "**/*.toml"
+      - ".github/workflows/rust.yml"
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+          components: rustfmt
+
+      - name: Install nightly rust for udeps
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly-2025-08-09
+
+      - name: Get cache keys
+        id: cache-keys
+        run: |
+          echo "rust-version=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache cargo tools
+        uses: actions/cache@v4
+        id: cache-cargo-tools
+        with:
+          path: |
+            ~/.cargo/bin/cargo-sort
+            ~/.cargo/bin/cargo-udeps
+          key: cargo-tools-${{ runner.os }}-${{ steps.cache-keys.outputs.rust-version }}
+
+      - name: Install cargo tools
+        run: |
+          if [[ "${{ steps.cache-cargo-tools.outputs.cache-hit }}" != "true" ]]; then
+            echo "Cache miss - installing cargo tools..."
+            cargo install cargo-sort --force
+            cargo install cargo-udeps --force
+          elif ! cargo sort --version >/dev/null 2>&1 || ! cargo udeps --version >/dev/null 2>&1; then
+            echo "Cache hit but tools don't work - reinstalling cargo tools..."
+            cargo install cargo-sort --force
+            cargo install cargo-udeps --force
+          else
+            echo "Using cached cargo tools"
+            echo "cargo-sort version: $(cargo sort --version)"
+            echo "cargo-udeps version: $(cargo udeps --version)"
+          fi
+
+      - name: Cache cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-build-${{ runner.os }}-${{ steps.cache-keys.outputs.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Format check
+        run: cargo +1.88.0 fmt --check
+
+      - name: Compile check
+        env:
+          RUSTFLAGS: "-D warnings"
+        run: cargo +1.88.0 check --all-targets
+
+      - name: Check Cargo.toml dependencies are sorted
+        run: |
+          if ! cargo +1.88.0 sort --check; then
+            echo "Cargo.toml dependencies are not sorted!"
+            echo "Please run: cargo install cargo-sort && cargo sort"
+            exit 1
+          fi
+          echo "All Cargo.toml dependencies are properly sorted"
+
+      - name: Check for unused dependencies
+        run: |
+          if ! cargo +nightly-2025-08-09 udeps --all-targets; then
+            echo "Found unused dependencies!"
+            echo "Please run: cargo install cargo-udeps && cargo +nightly-2025-08-09 udeps --all-targets"
+            echo "Remove any unused dependencies from Cargo.toml"
+            exit 1
+          fi
+          echo "No unused dependencies found"
+
+      - name: Test
+        run: cargo +1.88.0 test --all-targets

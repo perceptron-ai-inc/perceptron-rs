@@ -1,0 +1,13 @@
+# https://rust-lang.github.io/rustfmt/
+
+# Specifies which edition is used by the parser
+edition = "2024"
+
+# Set the maximum width of a line before wrapping
+max_width = 120
+
+# Reorder import statements alphabetically
+reorder_imports = true
+
+# Sort module declarations at the top
+reorder_modules = true

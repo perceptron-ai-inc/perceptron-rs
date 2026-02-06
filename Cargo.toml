@@ -1,0 +1,17 @@
+[package]
+name = "perceptron"
+version = "0.1.0"
+edition = "2024"
+description = "Rust SDK for Perceptron models"
+license = "MIT"
+
+[dependencies]
+reqwest = { version = "0.13.1", features = ["json"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+tokio = { version = "1.49.0", features = ["full"] }
+
+[dev-dependencies]
+faux = "0.1.13"
+tokio = { version = "1.49.0", features = ["full", "macros"] }
