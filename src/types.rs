@@ -1,5 +1,6 @@
 /// Output format for model responses.
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum OutputFormat {
     /// Plain text response (default).
     #[default]
@@ -41,6 +42,7 @@ impl OutputFormat {
 /// Use [`AnalyzeImageRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct AnalyzeImageRequest {
     /// The model to use.
     pub model: String,
@@ -135,6 +137,7 @@ impl AnalyzeImageRequest {
 
 /// Result of an image analysis request.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct AnalyzeImageResponse {
     /// The main response content from the model.
     pub content: Option<String>,
