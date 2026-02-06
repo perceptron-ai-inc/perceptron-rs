@@ -1,4 +1,4 @@
-# perceptron
+# Perceptron Rust SDK
 
 Rust SDK for Perceptron AI models.
 
