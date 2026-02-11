@@ -1,3 +1,5 @@
+use reqwest::Client;
+
 use crate::chat_completions::*;
 use crate::error::PerceptronError;
 use crate::types::*;
@@ -36,6 +38,12 @@ impl PerceptronClient {
     /// Add a custom header to include on every request.
     pub fn header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
         self.chat_completions.set_header(name.into(), value.into());
+        self
+    }
+
+    /// Set the HTTP client to use for requests.
+    pub fn http_client(mut self, client: Client) -> Self {
+        self.chat_completions.set_http_client(client);
         self
     }
 

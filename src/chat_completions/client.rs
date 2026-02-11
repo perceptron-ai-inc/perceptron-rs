@@ -38,6 +38,10 @@ impl ChatCompletionsClient {
         self.headers.insert(name, value);
     }
 
+    pub fn set_http_client(&mut self, client: Client) {
+        self.http = client;
+    }
+
     /// Send a chat completion request and return the raw response.
     pub async fn complete(
         &self,
