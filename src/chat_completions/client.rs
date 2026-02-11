@@ -6,7 +6,6 @@ use super::error::{ApiErrorDetail, ApiErrorResponse, ChatCompletionError};
 use super::types::*;
 
 /// Low-level client for the chat completions API.
-#[cfg_attr(test, faux::create)]
 #[derive(Clone, Debug)]
 pub struct ChatCompletionsClient {
     http: Client,
@@ -15,7 +14,6 @@ pub struct ChatCompletionsClient {
     headers: HashMap<String, String>,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl ChatCompletionsClient {
     pub fn new() -> Self {
         Self {

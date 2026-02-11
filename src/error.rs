@@ -1,5 +1,5 @@
-use crate::chat_completions::error::ApiErrorDetail;
 use crate::chat_completions::ChatCompletionError;
+use crate::chat_completions::error::ApiErrorDetail;
 
 /// Errors that can occur when using the Perceptron SDK.
 #[derive(Debug, thiserror::Error)]
@@ -10,10 +10,7 @@ pub enum PerceptronError {
 
     /// API returned a non-success status code.
     #[error("API error ({status}): {}", detail.message)]
-    ApiError {
-        status: u16,
-        detail: ApiErrorDetail,
-    },
+    ApiError { status: u16, detail: ApiErrorDetail },
 
     /// Failed to parse the API response.
     #[error("Failed to parse response: {0}")]
@@ -24,12 +21,10 @@ impl From<ChatCompletionError> for PerceptronError {
     fn from(err: ChatCompletionError) -> Self {
         match err {
             ChatCompletionError::RequestFailed(msg) => PerceptronError::RequestFailed(msg),
-            ChatCompletionError::ApiError { status, detail } => {
-                PerceptronError::ApiError {
-                    status: status.as_u16(),
-                    detail,
-                }
-            }
+            ChatCompletionError::ApiError { status, detail } => PerceptronError::ApiError {
+                status: status.as_u16(),
+                detail,
+            },
             ChatCompletionError::ParseFailed(msg) => PerceptronError::ParseFailed(msg),
         }
     }
