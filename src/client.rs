@@ -47,11 +47,16 @@ impl PerceptronClient {
         self
     }
 
+}
+
+/// Trait for analyzing images with a Perceptron AI model.
+pub trait Perceptron {
     /// Analyze an image using a Perceptron AI model.
-    ///
-    /// Sends a multimodal chat completion request with the specified image and prompt,
-    /// and returns the model's response. Supports configurable sampling parameters.
-    pub async fn analyze_image(&self, request: AnalyzeImageRequest) -> Result<AnalyzeImageResponse, PerceptronError> {
+    fn analyze_image(&self, request: AnalyzeImageRequest) -> impl Future<Output = Result<AnalyzeImageResponse, PerceptronError>> + Send;
+}
+
+impl Perceptron for PerceptronClient {
+    async fn analyze_image(&self, request: AnalyzeImageRequest) -> Result<AnalyzeImageResponse, PerceptronError> {
         let wire_request = build_chat_completion_request(&request);
 
         let completion = self.chat_completions.complete(wire_request).await?;
