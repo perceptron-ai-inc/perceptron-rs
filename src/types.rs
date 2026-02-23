@@ -16,30 +16,6 @@ pub enum OutputFormat {
     Polygon,
 }
 
-impl OutputFormat {
-    /// Generate the hint tag for the system prompt.
-    pub(crate) fn to_hint(&self, enable_reasoning: Option<bool>) -> Option<String> {
-        let mut components = Vec::new();
-
-        match self {
-            OutputFormat::Text => {}
-            OutputFormat::Point => components.push("POINT"),
-            OutputFormat::Box => components.push("BOX"),
-            OutputFormat::Polygon => components.push("POLYGON"),
-        }
-
-        if enable_reasoning.unwrap_or(false) {
-            components.push("THINK");
-        }
-
-        if components.is_empty() {
-            None
-        } else {
-            Some(format!("<hint>{}</hint>", components.join(" ")))
-        }
-    }
-}
-
 /// Parameters for an image analysis request.
 ///
 /// Use [`AnalyzeImageRequest::new`] to create a request with required fields,
@@ -54,7 +30,7 @@ pub struct AnalyzeImageRequest {
     /// URL of the image to analyze.
     pub image_url: String,
     /// Output format for the response.
-    pub output_format: OutputFormat,
+    pub output_format: Option<OutputFormat>,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
@@ -78,7 +54,7 @@ impl AnalyzeImageRequest {
             model: model.into(),
             message: message.into(),
             image_url: image_url.into(),
-            output_format: OutputFormat::default(),
+            output_format: None,
             reasoning: None,
             temperature: None,
             top_p: None,
@@ -91,7 +67,7 @@ impl AnalyzeImageRequest {
 
     /// Set the output format.
     pub fn output_format(mut self, format: OutputFormat) -> Self {
-        self.output_format = format;
+        self.output_format = Some(format);
         self
     }
 

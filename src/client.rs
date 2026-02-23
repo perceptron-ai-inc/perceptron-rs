@@ -73,10 +73,32 @@ impl Perceptron for PerceptronClient {
     }
 }
 
+/// Generate the hint tag for the system prompt based on output format and reasoning.
+fn system_hint(output_format: Option<&OutputFormat>, enable_reasoning: Option<bool>) -> Option<String> {
+    let mut components = Vec::new();
+
+    match output_format {
+        Some(OutputFormat::Point) => components.push("POINT"),
+        Some(OutputFormat::Box) => components.push("BOX"),
+        Some(OutputFormat::Polygon) => components.push("POLYGON"),
+        _ => {}
+    }
+
+    if enable_reasoning.unwrap_or(false) {
+        components.push("THINK");
+    }
+
+    if components.is_empty() {
+        None
+    } else {
+        Some(format!("<hint>{}</hint>", components.join(" ")))
+    }
+}
+
 fn build_chat_completion_request(request: &AnalyzeImageRequest) -> CreateChatCompletionRequest {
     let mut messages = Vec::new();
 
-    if let Some(hint) = request.output_format.to_hint(request.reasoning) {
+    if let Some(hint) = system_hint(request.output_format.as_ref(), request.reasoning) {
         messages.push(ChatCompletionMessage::System(ChatCompletionSystemMessage {
             content: ChatCompletionSystemMessageContent::Text(hint),
         }));
