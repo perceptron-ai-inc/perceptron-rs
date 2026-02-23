@@ -10,13 +10,13 @@ repository = "https://github.com/perceptron-ai-inc/perceptron-rs"
 schema = ["schemars"]
 
 [dependencies]
-schemars = { version = "1.2.1", optional = true }
 reqwest = { version = "0.13.1", features = ["json"] }
+schemars = { version = "1.2.1", optional = true }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 thiserror = "2.0.18"
 tokio = { version = "1.49.0", features = ["full"] }
 
 [dev-dependencies]
-wiremock = "0.6"
 tokio = { version = "1.49.0", features = ["full", "macros"] }
+wiremock = "0.6"
