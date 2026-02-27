@@ -7,14 +7,14 @@ Get an API key at https://platform.perceptron.inc
 ## Usage
 
 ```rust
-use perceptron_ai::{PerceptronClient, AnalyzeImageRequest, OutputFormat};
+use perceptron_ai::{PerceptronClient, AnalyzeRequest, OutputFormat};
 
 #[tokio::main]
 async fn main() -> Result<(), perceptron_ai::PerceptronError> {
     let client = PerceptronClient::new()
         .api_key("my-api-key");
 
-    let request = AnalyzeImageRequest::new(
+    let request = AnalyzeRequest::new(
         "model-name",
         "Describe this image",
         "https://example.com/image.jpg",
@@ -23,7 +23,7 @@ async fn main() -> Result<(), perceptron_ai::PerceptronError> {
     .reasoning(true)
     .temperature(0.7);
 
-    let response = client.analyze_image(request).await?;
+    let response = client.analyze(request).await?;
 
     if let Some(content) = response.content {
         println!("{content}");
