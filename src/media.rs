@@ -47,6 +47,7 @@ impl MediaFormat {
 
 /// Media for a request — either a URL or base64-encoded data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Media {
     /// A URL pointing to media.

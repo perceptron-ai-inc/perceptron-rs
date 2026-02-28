@@ -373,6 +373,7 @@ pub struct TextResponse {
 
 /// Pointing data extracted from model output — exactly one spatial type.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Pointing {
     /// Point annotations.
