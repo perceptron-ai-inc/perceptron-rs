@@ -1,21 +1,22 @@
 use perceptron_ai::{
-    AnalyzeRequest, BoundingBox, OutputFormat, Perceptron, PerceptronClient, Point, Pointing, Polygon,
+    AnalyzeRequest, BoundingBox, Media, MediaFormat, OutputFormat, Perceptron, Point, Pointing, Polygon,
 };
 use serde_json::json;
 use wiremock::matchers::{body_partial_json, method, path};
-use wiremock::{Mock, MockServer, ResponseTemplate};
+use wiremock::{Mock, ResponseTemplate};
+
+mod common;
 
 fn test_request(model: &str) -> AnalyzeRequest {
-    AnalyzeRequest::new(model, "Describe this", "https://example.com/img.jpg")
+    AnalyzeRequest::new(model, "Describe this", Media::image_url("https://example.com/img.jpg"))
 }
 
 #[tokio::test]
 async fn complete_fails() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
 
     Mock::given(method("POST"))
         .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({"model": "test-model"})))
         .respond_with(ResponseTemplate::new(500).set_body_json(json!({
             "error": {
                 "message": "internal server error",
@@ -26,29 +27,22 @@ async fn complete_fails() {
         .mount(&server)
         .await;
 
-    let client = PerceptronClient::new().base_url(server.uri());
     let result = client.analyze(test_request("test-model")).await;
 
     assert!(result.is_err());
-    let err = result.unwrap_err();
-    assert!(err.to_string().contains("internal server error"));
+    assert!(result.unwrap_err().to_string().contains("internal server error"));
 }
 
 #[tokio::test]
 async fn empty_choices() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"model": "test-model"})),
+        json!({"choices": []}),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({"model": "test-model"})))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": []
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let response = client.analyze(test_request("test-model")).await.unwrap();
 
     assert_eq!(response.content, None);
@@ -58,24 +52,14 @@ async fn empty_choices() {
 
 #[tokio::test]
 async fn text_format() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"model": "test-model"})),
+        common::response("a cat", Some("I see fur")),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({"model": "test-model"})))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": "a cat",
-                    "reasoning_content": "I see fur"
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let response = client.analyze(test_request("test-model")).await.unwrap();
 
     assert_eq!(response.content, Some("a cat".to_string()));
@@ -85,23 +69,13 @@ async fn text_format() {
 
 #[tokio::test]
 async fn point_format() {
-    let server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<point mention="cat"> (100,200) </point>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POINT</hint>"}]})),
+        common::response(r#"<point mention="cat"> (100,200) </point>"#, None),
+    )
+    .await;
     let request = test_request("test-model").output_format(OutputFormat::Point);
     let response = client.analyze(request).await.unwrap();
 
@@ -118,23 +92,14 @@ async fn point_format() {
 
 #[tokio::test]
 async fn box_format() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<point_box mention="cat"> (10,20) (100,200) </point_box>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let request = test_request("test-model").output_format(OutputFormat::Box);
     let response = client.analyze(request).await.unwrap();
 
@@ -153,23 +118,14 @@ async fn box_format() {
 
 #[tokio::test]
 async fn polygon_format() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POLYGON</hint>"}]})),
+        common::response(r#"<polygon mention="cat"> (0,0) (100,0) (100,100) </polygon>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<polygon mention="cat"> (0,0) (100,0) (100,100) </polygon>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let request = test_request("test-model").output_format(OutputFormat::Polygon);
     let response = client.analyze(request).await.unwrap();
 
@@ -185,23 +141,14 @@ async fn polygon_format() {
 
 #[tokio::test]
 async fn multiple_points() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POINT</hint>"}]})),
+        common::response(r#"<point mention="left eye"> (150,200) </point><point mention="right eye"> (250,200) </point><point mention="nose"> (200,280) </point>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<point mention="left eye"> (150,200) </point><point mention="right eye"> (250,200) </point><point mention="nose"> (200,280) </point>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let request = test_request("test-model").output_format(OutputFormat::Point);
     let response = client.analyze(request).await.unwrap();
 
@@ -229,23 +176,14 @@ async fn multiple_points() {
 
 #[tokio::test]
 async fn multiple_boxes() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box><point_box mention="bird"> (600,10) (700,80) </point_box>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box><point_box mention="bird"> (600,10) (700,80) </point_box>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let request = test_request("test-model").output_format(OutputFormat::Box);
     let response = client.analyze(request).await.unwrap();
 
@@ -279,23 +217,14 @@ async fn multiple_boxes() {
 
 #[tokio::test]
 async fn multiple_polygons() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POLYGON</hint>"}]})),
+        common::response(r#"<polygon mention="roof"> (100,50) (200,10) (300,50) </polygon><polygon mention="wall"> (100,50) (300,50) (300,200) (100,200) </polygon>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<polygon mention="roof"> (100,50) (200,10) (300,50) </polygon><polygon mention="wall"> (100,50) (300,50) (300,200) (100,200) </polygon>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let request = test_request("test-model").output_format(OutputFormat::Polygon);
     let response = client.analyze(request).await.unwrap();
 
@@ -316,23 +245,14 @@ async fn multiple_polygons() {
 
 #[tokio::test]
 async fn collection_with_inheritance() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POINT</hint>"}]})),
+        common::response(r#"<collection mention="person"><point> (150,200) </point><point> (250,200) </point></collection><point mention="ball"> (500,400) </point>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<collection mention="person"><point> (150,200) </point><point> (250,200) </point></collection><point mention="ball"> (500,400) </point>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
     let request = test_request("test-model").output_format(OutputFormat::Point);
     let response = client.analyze(request).await.unwrap();
 
@@ -359,12 +279,61 @@ async fn collection_with_inheritance() {
 }
 
 #[tokio::test]
-async fn all_generation_params() {
-    let server = MockServer::start().await;
+async fn base64_media() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,abc123"}}
+                ]
+            }]
+        })),
+        common::response("a cat", None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({
+    let request = AnalyzeRequest::new("test-model", "Describe this", Media::base64(MediaFormat::Png, "abc123"));
+    let response = client.analyze(request).await.unwrap();
+
+    assert_eq!(response.content, Some("a cat".to_string()));
+}
+
+#[tokio::test]
+async fn video_url_media() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}}
+                ]
+            }]
+        })),
+        common::response("a video of a cat", None),
+    )
+    .await;
+
+    let request = AnalyzeRequest::new(
+        "test-model",
+        "Describe this",
+        Media::video_url("https://example.com/vid.mp4"),
+    );
+    let response = client.analyze(request).await.unwrap();
+
+    assert_eq!(response.content, Some("a video of a cat".to_string()));
+}
+
+#[tokio::test]
+async fn all_generation_params() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
             "model": "test-model",
             "max_completion_tokens": 100,
             "temperature": 0.7,
@@ -372,21 +341,12 @@ async fn all_generation_params() {
             "top_k": 50,
             "frequency_penalty": 0.5,
             "presence_penalty": 0.3
-        })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"<point mention="cat"> (50,60) </point>"#,
-                    "reasoning_content": "I see fur"
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
+        })),
+        common::response(r#"<point mention="cat"> (50,60) </point>"#, Some("I see fur")),
+    )
+    .await;
 
-    let client = PerceptronClient::new().base_url(server.uri());
-    let request = AnalyzeRequest::new("test-model", "Describe this", "https://example.com/img.jpg")
+    let request = test_request("test-model")
         .output_format(OutputFormat::Point)
         .reasoning(true)
         .temperature(0.7)

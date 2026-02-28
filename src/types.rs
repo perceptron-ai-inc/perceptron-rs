@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::media::Media;
+
 /// Output format for model responses.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -42,10 +44,66 @@ pub enum OcrMode {
     Html,
 }
 
-/// Generation parameters shared across all request types.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+/// Generate generation parameter setter methods on a request struct.
+macro_rules! generation_param_setters {
+    () => {
+        /// Enable chain-of-thought reasoning.
+        pub fn reasoning(mut self, enable: bool) -> Self {
+            self.reasoning = Some(enable);
+            self
+        }
+
+        /// Set the sampling temperature.
+        pub fn temperature(mut self, temperature: f32) -> Self {
+            self.temperature = Some(temperature);
+            self
+        }
+
+        /// Set nucleus sampling probability.
+        pub fn top_p(mut self, top_p: f32) -> Self {
+            self.top_p = Some(top_p);
+            self
+        }
+
+        /// Set top-k sampling.
+        pub fn top_k(mut self, top_k: u32) -> Self {
+            self.top_k = Some(top_k);
+            self
+        }
+
+        /// Set frequency penalty.
+        pub fn frequency_penalty(mut self, frequency_penalty: f32) -> Self {
+            self.frequency_penalty = Some(frequency_penalty);
+            self
+        }
+
+        /// Set presence penalty.
+        pub fn presence_penalty(mut self, presence_penalty: f32) -> Self {
+            self.presence_penalty = Some(presence_penalty);
+            self
+        }
+
+        /// Set maximum completion tokens.
+        pub fn max_completion_tokens(mut self, max_tokens: u32) -> Self {
+            self.max_completion_tokens = Some(max_tokens);
+            self
+        }
+    };
+}
+
+/// Parameters for a media analysis request.
+///
+/// Use [`AnalyzeRequest::new`] to create a request with required fields,
+/// then chain optional setters using the builder pattern.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
-pub struct GenerationParams {
+pub struct AnalyzeRequest {
+    /// User message or prompt to send.
+    pub message: String,
+    /// Media to analyze.
+    pub media: Media,
+    /// Output format for the response.
+    pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
@@ -64,82 +122,21 @@ pub struct GenerationParams {
     pub max_completion_tokens: Option<u32>,
 }
 
-/// Generate delegation setter methods for [`GenerationParams`] on a request struct.
-macro_rules! generation_param_setters {
-    () => {
-        /// Enable chain-of-thought reasoning.
-        pub fn reasoning(mut self, enable: bool) -> Self {
-            self.generation_params.reasoning = Some(enable);
-            self
-        }
-
-        /// Set the sampling temperature.
-        pub fn temperature(mut self, temperature: f32) -> Self {
-            self.generation_params.temperature = Some(temperature);
-            self
-        }
-
-        /// Set nucleus sampling probability.
-        pub fn top_p(mut self, top_p: f32) -> Self {
-            self.generation_params.top_p = Some(top_p);
-            self
-        }
-
-        /// Set top-k sampling.
-        pub fn top_k(mut self, top_k: u32) -> Self {
-            self.generation_params.top_k = Some(top_k);
-            self
-        }
-
-        /// Set frequency penalty.
-        pub fn frequency_penalty(mut self, frequency_penalty: f32) -> Self {
-            self.generation_params.frequency_penalty = Some(frequency_penalty);
-            self
-        }
-
-        /// Set presence penalty.
-        pub fn presence_penalty(mut self, presence_penalty: f32) -> Self {
-            self.generation_params.presence_penalty = Some(presence_penalty);
-            self
-        }
-
-        /// Set maximum completion tokens.
-        pub fn max_completion_tokens(mut self, max_tokens: u32) -> Self {
-            self.generation_params.max_completion_tokens = Some(max_tokens);
-            self
-        }
-    };
-}
-
-/// Parameters for a media analysis request.
-///
-/// Use [`AnalyzeRequest::new`] to create a request with required fields,
-/// then chain optional setters using the builder pattern.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
-pub struct AnalyzeRequest {
-    /// User message or prompt to send.
-    pub message: String,
-    /// URL of the media to analyze.
-    pub image_url: String,
-    /// Output format for the response.
-    pub output_format: Option<OutputFormat>,
-    /// Generation parameters.
-    #[serde(flatten)]
-    pub generation_params: GenerationParams,
-}
-
 impl AnalyzeRequest {
     /// Create a new analysis request with required fields.
-    pub fn new(model: impl Into<String>, message: impl Into<String>, image_url: impl Into<String>) -> Self {
+    pub fn new(model: impl Into<String>, message: impl Into<String>, media: Media) -> Self {
         Self {
             message: message.into(),
-            image_url: image_url.into(),
+            media,
             output_format: None,
-            generation_params: GenerationParams {
-                model: model.into(),
-                ..Default::default()
-            },
+            model: model.into(),
+            reasoning: None,
+            temperature: None,
+            top_p: None,
+            top_k: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            max_completion_tokens: None,
         }
     }
 
@@ -159,28 +156,45 @@ impl AnalyzeRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct CaptionRequest {
-    /// URL of the media to caption.
-    pub image_url: String,
+    /// Media to caption.
+    pub media: Media,
     /// Caption style.
     pub style: CaptionStyle,
     /// Output format for the response (defaults to Box).
     pub output_format: Option<OutputFormat>,
-    /// Generation parameters.
-    #[serde(flatten)]
-    pub generation_params: GenerationParams,
+    /// Model to use for the request.
+    pub model: String,
+    /// Whether to enable chain-of-thought reasoning.
+    pub reasoning: Option<bool>,
+    /// Sampling temperature.
+    pub temperature: Option<f32>,
+    /// Nucleus sampling probability.
+    pub top_p: Option<f32>,
+    /// Top-k sampling value.
+    pub top_k: Option<u32>,
+    /// Frequency penalty.
+    pub frequency_penalty: Option<f32>,
+    /// Presence penalty.
+    pub presence_penalty: Option<f32>,
+    /// Maximum number of tokens to generate.
+    pub max_completion_tokens: Option<u32>,
 }
 
 impl CaptionRequest {
     /// Create a new caption request.
-    pub fn new(model: impl Into<String>, image_url: impl Into<String>) -> Self {
+    pub fn new(model: impl Into<String>, media: Media) -> Self {
         Self {
-            image_url: image_url.into(),
+            media,
             style: CaptionStyle::default(),
             output_format: None,
-            generation_params: GenerationParams {
-                model: model.into(),
-                ..Default::default()
-            },
+            model: model.into(),
+            reasoning: None,
+            temperature: None,
+            top_p: None,
+            top_k: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            max_completion_tokens: None,
         }
     }
 
@@ -206,25 +220,42 @@ impl CaptionRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct OcrRequest {
-    /// URL of the media to extract text from.
-    pub image_url: String,
+    /// Media to extract text from.
+    pub media: Media,
     /// OCR output mode.
     pub mode: OcrMode,
-    /// Generation parameters.
-    #[serde(flatten)]
-    pub generation_params: GenerationParams,
+    /// Model to use for the request.
+    pub model: String,
+    /// Whether to enable chain-of-thought reasoning.
+    pub reasoning: Option<bool>,
+    /// Sampling temperature.
+    pub temperature: Option<f32>,
+    /// Nucleus sampling probability.
+    pub top_p: Option<f32>,
+    /// Top-k sampling value.
+    pub top_k: Option<u32>,
+    /// Frequency penalty.
+    pub frequency_penalty: Option<f32>,
+    /// Presence penalty.
+    pub presence_penalty: Option<f32>,
+    /// Maximum number of tokens to generate.
+    pub max_completion_tokens: Option<u32>,
 }
 
 impl OcrRequest {
     /// Create a new OCR request.
-    pub fn new(model: impl Into<String>, image_url: impl Into<String>) -> Self {
+    pub fn new(model: impl Into<String>, media: Media) -> Self {
         Self {
-            image_url: image_url.into(),
+            media,
             mode: OcrMode::default(),
-            generation_params: GenerationParams {
-                model: model.into(),
-                ..Default::default()
-            },
+            model: model.into(),
+            reasoning: None,
+            temperature: None,
+            top_p: None,
+            top_k: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            max_completion_tokens: None,
         }
     }
 
@@ -244,25 +275,42 @@ impl OcrRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct DetectRequest {
-    /// URL of the media to detect objects in.
-    pub image_url: String,
+    /// Media to detect objects in.
+    pub media: Media,
     /// Optional list of object categories to detect.
     pub classes: Option<Vec<String>>,
-    /// Generation parameters.
-    #[serde(flatten)]
-    pub generation_params: GenerationParams,
+    /// Model to use for the request.
+    pub model: String,
+    /// Whether to enable chain-of-thought reasoning.
+    pub reasoning: Option<bool>,
+    /// Sampling temperature.
+    pub temperature: Option<f32>,
+    /// Nucleus sampling probability.
+    pub top_p: Option<f32>,
+    /// Top-k sampling value.
+    pub top_k: Option<u32>,
+    /// Frequency penalty.
+    pub frequency_penalty: Option<f32>,
+    /// Presence penalty.
+    pub presence_penalty: Option<f32>,
+    /// Maximum number of tokens to generate.
+    pub max_completion_tokens: Option<u32>,
 }
 
 impl DetectRequest {
     /// Create a new detection request.
-    pub fn new(model: impl Into<String>, image_url: impl Into<String>) -> Self {
+    pub fn new(model: impl Into<String>, media: Media) -> Self {
         Self {
-            image_url: image_url.into(),
+            media,
             classes: None,
-            generation_params: GenerationParams {
-                model: model.into(),
-                ..Default::default()
-            },
+            model: model.into(),
+            reasoning: None,
+            temperature: None,
+            top_p: None,
+            top_k: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            max_completion_tokens: None,
         }
     }
 

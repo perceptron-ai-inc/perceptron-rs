@@ -20,10 +20,21 @@ pub struct ChatCompletionContentPartImage {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VideoUrl {
+    pub url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ChatCompletionContentPartVideo {
+    pub video_url: VideoUrl,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChatCompletionContentPart {
     Text(ChatCompletionContentPartText),
     ImageUrl(ChatCompletionContentPartImage),
+    VideoUrl(ChatCompletionContentPartVideo),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

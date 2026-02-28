@@ -1,129 +1,92 @@
 use perceptron_ai::{
-    BoundingBox, CaptionRequest, CaptionStyle, OutputFormat, Perceptron, PerceptronClient, Point, Pointing,
+    BoundingBox, CaptionRequest, CaptionStyle, Media, MediaFormat, OutputFormat, Perceptron, Point, Pointing,
 };
 use serde_json::json;
-use wiremock::matchers::{body_partial_json, method, path};
-use wiremock::{Mock, MockServer, ResponseTemplate};
+use wiremock::matchers::body_partial_json;
 
-fn box_response() -> serde_json::Value {
-    json!({
-        "choices": [{
-            "message": {
-                "content": r#"A cat on a windowsill <point_box mention="cat"> (10,20) (300,400) </point_box>"#,
-                "reasoning_content": null
-            }
-        }]
-    })
+mod common;
+
+fn box_content() -> &'static str {
+    r#"A cat on a windowsill <point_box mention="cat"> (10,20) (300,400) </point_box>"#
+}
+
+fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
+    assert!(response.content.is_some());
+    assert_eq!(
+        response.pointing,
+        Some(Pointing::Boxes(vec![BoundingBox {
+            x1: 10,
+            y1: 20,
+            x2: 300,
+            y2: 400,
+            mention: Some("cat".to_string()),
+        }]))
+    );
 }
 
 #[tokio::test]
 async fn concise_default() {
-    let server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
             "model": "test-model",
             "messages": [
-                {
-                    "role": "system",
-                    "content": "<hint>BOX</hint>"
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}},
-                        {"type": "text", "text": "Provide a concise, human-friendly caption for the upcoming image."}
-                    ]
-                }
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}},
+                    {"type": "text", "text": "Provide a concise, human-friendly caption for the upcoming image."}
+                ]}
             ]
-        })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(box_response()))
-        .expect(1)
-        .mount(&server)
-        .await;
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
 
-    let client = PerceptronClient::new().base_url(server.uri());
-    let request = CaptionRequest::new("test-model", "https://example.com/img.jpg");
+    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
     let response = client.caption(request).await.unwrap();
 
-    assert!(response.content.is_some());
-    assert_eq!(
-        response.pointing,
-        Some(Pointing::Boxes(vec![BoundingBox {
-            x1: 10,
-            y1: 20,
-            x2: 300,
-            y2: 400,
-            mention: Some("cat".to_string()),
-        }]))
-    );
+    assert_single_cat_box(&response);
 }
 
 #[tokio::test]
 async fn detailed_style() {
-    let server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
             "messages": [
-                {
-                    "role": "system",
-                    "content": "<hint>BOX</hint>"
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url"},
-                        {"type": "text", "text": "Provide a detailed caption describing key objects, relationships, and context in the upcoming image."}
-                    ]
-                }
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"},
+                    {"type": "text", "text": "Provide a detailed caption describing key objects, relationships, and context in the upcoming image."}
+                ]}
             ]
-        })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(box_response()))
-        .expect(1)
-        .mount(&server)
-        .await;
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
 
-    let client = PerceptronClient::new().base_url(server.uri());
-    let request = CaptionRequest::new("test-model", "https://example.com/img.jpg").style(CaptionStyle::Detailed);
+    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"))
+        .style(CaptionStyle::Detailed);
     let response = client.caption(request).await.unwrap();
 
-    assert!(response.content.is_some());
-    assert_eq!(
-        response.pointing,
-        Some(Pointing::Boxes(vec![BoundingBox {
-            x1: 10,
-            y1: 20,
-            x2: 300,
-            y2: 400,
-            mention: Some("cat".to_string()),
-        }]))
-    );
+    assert_single_cat_box(&response);
 }
 
 #[tokio::test]
 async fn with_reasoning() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{"role": "system", "content": "<hint>BOX THINK</hint>"}]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "<hint>BOX THINK</hint>"
-                }
-            ]
-        })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(box_response()))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
-    let request = CaptionRequest::new("test-model", "https://example.com/img.jpg").reasoning(true);
+    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg")).reasoning(true);
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());
@@ -132,24 +95,15 @@ async fn with_reasoning() {
 
 #[tokio::test]
 async fn multiple_boxes() {
-    let server = MockServer::start().await;
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        common::response(r#"A cat and dog <point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box>"#, None),
+    )
+    .await;
 
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"A cat and dog <point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    let client = PerceptronClient::new().base_url(server.uri());
-    let request = CaptionRequest::new("test-model", "https://example.com/img.jpg");
+    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());
@@ -175,33 +129,43 @@ async fn multiple_boxes() {
 }
 
 #[tokio::test]
-async fn point_format() {
-    let server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
-        .and(body_partial_json(json!({
+async fn base64_media() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
             "messages": [
-                {
-                    "role": "system",
-                    "content": "<hint>POINT</hint>"
-                }
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,imgdata"}},
+                    {"type": "text"}
+                ]}
             ]
-        })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "choices": [{
-                "message": {
-                    "content": r#"A cat <point mention="cat"> (150,250) </point>"#,
-                    "reasoning_content": null
-                }
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
 
-    let client = PerceptronClient::new().base_url(server.uri());
-    let request = CaptionRequest::new("test-model", "https://example.com/img.jpg").output_format(OutputFormat::Point);
+    let request = CaptionRequest::new("test-model", Media::base64(MediaFormat::Jpeg, "imgdata"));
+    let response = client.caption(request).await.unwrap();
+
+    assert_single_cat_box(&response);
+}
+
+#[tokio::test]
+async fn point_format() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{"role": "system", "content": "<hint>POINT</hint>"}]
+        })),
+        common::response(r#"A cat <point mention="cat"> (150,250) </point>"#, None),
+    )
+    .await;
+
+    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"))
+        .output_format(OutputFormat::Point);
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());

@@ -2,6 +2,7 @@ use reqwest::Client;
 
 use crate::chat_completions::*;
 use crate::error::PerceptronError;
+use crate::media::*;
 use crate::pointing;
 use crate::types::*;
 
@@ -116,12 +117,18 @@ impl Perceptron for PerceptronClient {
     async fn analyze(&self, request: AnalyzeRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.unwrap_or(OutputFormat::Text);
         let desc = RequestDescriptor {
-            image_url: request.image_url,
-            system_prompts: system_hint(Some(&output_format), request.generation_params.reasoning)
+            media: request.media,
+            system_prompts: system_hint(Some(&output_format), request.reasoning)
                 .into_iter()
                 .collect(),
             user_text: Some(request.message),
-            generation_params: request.generation_params,
+            model: request.model,
+            max_completion_tokens: request.max_completion_tokens,
+            temperature: request.temperature,
+            top_p: request.top_p,
+            top_k: request.top_k,
+            frequency_penalty: request.frequency_penalty,
+            presence_penalty: request.presence_penalty,
         };
         self.send_and_extract(build_wire_request(desc), &output_format).await
     }
@@ -135,12 +142,18 @@ impl Perceptron for PerceptronClient {
             }
         };
         let desc = RequestDescriptor {
-            image_url: request.image_url,
-            system_prompts: system_hint(Some(&output_format), request.generation_params.reasoning)
+            media: request.media,
+            system_prompts: system_hint(Some(&output_format), request.reasoning)
                 .into_iter()
                 .collect(),
             user_text: Some(user_text.to_string()),
-            generation_params: request.generation_params,
+            model: request.model,
+            max_completion_tokens: request.max_completion_tokens,
+            temperature: request.temperature,
+            top_p: request.top_p,
+            top_k: request.top_k,
+            frequency_penalty: request.frequency_penalty,
+            presence_penalty: request.presence_penalty,
         };
         self.send_and_extract(build_wire_request(desc), &output_format).await
     }
@@ -148,9 +161,7 @@ impl Perceptron for PerceptronClient {
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
         let ocr_system = "You are an OCR (Optical Character Recognition) system. \
             Accurately detect, extract, and transcribe all readable text from the image.";
-        let mut system_prompts: Vec<String> = system_hint(None, request.generation_params.reasoning)
-            .into_iter()
-            .collect();
+        let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
         system_prompts.push(ocr_system.to_string());
         let user_text = match request.mode {
             OcrMode::Plain => None,
@@ -162,10 +173,16 @@ impl Perceptron for PerceptronClient {
             ),
         };
         let desc = RequestDescriptor {
-            image_url: request.image_url,
+            media: request.media,
             system_prompts,
             user_text,
-            generation_params: request.generation_params,
+            model: request.model,
+            max_completion_tokens: request.max_completion_tokens,
+            temperature: request.temperature,
+            top_p: request.top_p,
+            top_k: request.top_k,
+            frequency_penalty: request.frequency_penalty,
+            presence_penalty: request.presence_penalty,
         };
         self.send(build_wire_request(desc)).await
     }
@@ -180,16 +197,21 @@ impl Perceptron for PerceptronClient {
             }
             _ => "Your goal is to segment out the objects in the scene".to_string(),
         };
-        let mut system_prompts: Vec<String> =
-            system_hint(Some(&OutputFormat::Box), request.generation_params.reasoning)
-                .into_iter()
-                .collect();
+        let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
+            .into_iter()
+            .collect();
         system_prompts.push(domain_system);
         let desc = RequestDescriptor {
-            image_url: request.image_url,
+            media: request.media,
             system_prompts,
             user_text: None,
-            generation_params: request.generation_params,
+            model: request.model,
+            max_completion_tokens: request.max_completion_tokens,
+            temperature: request.temperature,
+            top_p: request.top_p,
+            top_k: request.top_k,
+            frequency_penalty: request.frequency_penalty,
+            presence_penalty: request.presence_penalty,
         };
         self.send_and_extract(build_wire_request(desc), &OutputFormat::Box)
             .await
@@ -219,10 +241,16 @@ fn system_hint(output_format: Option<&OutputFormat>, enable_reasoning: Option<bo
 }
 
 struct RequestDescriptor {
-    image_url: String,
+    media: Media,
     system_prompts: Vec<String>,
     user_text: Option<String>,
-    generation_params: GenerationParams,
+    model: String,
+    max_completion_tokens: Option<u32>,
+    temperature: Option<f32>,
+    top_p: Option<f32>,
+    top_k: Option<u32>,
+    frequency_penalty: Option<f32>,
+    presence_penalty: Option<f32>,
 }
 
 fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
@@ -234,9 +262,16 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
         }));
     }
 
-    let mut user_parts = vec![ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
-        image_url: ImageUrl { url: desc.image_url },
-    })];
+    let media_url = desc.media.to_url();
+    let media_part = match desc.media.media_type() {
+        MediaType::Image => ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
+            image_url: ImageUrl { url: media_url },
+        }),
+        MediaType::Video => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
+            video_url: VideoUrl { url: media_url },
+        }),
+    };
+    let mut user_parts = vec![media_part];
 
     if let Some(text) = desc.user_text {
         user_parts.push(ChatCompletionContentPart::Text(ChatCompletionContentPartText { text }));
@@ -248,12 +283,12 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
 
     CreateChatCompletionRequest {
         messages,
-        model: desc.generation_params.model,
-        max_completion_tokens: desc.generation_params.max_completion_tokens,
-        temperature: desc.generation_params.temperature,
-        top_p: desc.generation_params.top_p,
-        top_k: desc.generation_params.top_k,
-        frequency_penalty: desc.generation_params.frequency_penalty,
-        presence_penalty: desc.generation_params.presence_penalty,
+        model: desc.model,
+        max_completion_tokens: desc.max_completion_tokens,
+        temperature: desc.temperature,
+        top_p: desc.top_p,
+        top_k: desc.top_k,
+        frequency_penalty: desc.frequency_penalty,
+        presence_penalty: desc.presence_penalty,
     }
 }
