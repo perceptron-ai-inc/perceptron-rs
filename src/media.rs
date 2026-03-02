@@ -47,15 +47,15 @@ impl MediaFormat {
 
 /// Media for a request — either a URL or base64-encoded data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Media {
     /// A URL pointing to media.
     Url {
         /// The type of media.
         media_type: MediaType,
-        /// The URL string.
-        url: String,
+        /// The source URL.
+        src: String,
     },
     /// Base64-encoded media data.
     Base64 {
@@ -71,7 +71,7 @@ impl Media {
     pub fn image_url(url: impl Into<String>) -> Self {
         Media::Url {
             media_type: MediaType::Image,
-            url: url.into(),
+            src: url.into(),
         }
     }
 
@@ -79,7 +79,7 @@ impl Media {
     pub fn video_url(url: impl Into<String>) -> Self {
         Media::Url {
             media_type: MediaType::Video,
-            url: url.into(),
+            src: url.into(),
         }
     }
 
@@ -105,7 +105,7 @@ impl Media {
     /// For `Base64` variants, constructs a `data:{mime};base64,{data}` URL.
     pub fn to_url(&self) -> String {
         match self {
-            Media::Url { url, .. } => url.clone(),
+            Media::Url { src, .. } => src.clone(),
             Media::Base64 { format, data } => {
                 format!("data:{};base64,{}", format.mime(), data)
             }
