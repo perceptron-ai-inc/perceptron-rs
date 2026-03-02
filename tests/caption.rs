@@ -14,13 +14,16 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![BoundingBox {
-            x1: 10,
-            y1: 20,
-            x2: 300,
-            y2: 400,
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            boxes: vec![BoundingBox {
+                x1: 10,
+                y1: 20,
+                x2: 300,
+                y2: 400,
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }
 
@@ -109,22 +112,25 @@ async fn multiple_boxes() {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![
-            BoundingBox {
-                x1: 10,
-                y1: 20,
-                x2: 100,
-                y2: 200,
-                mention: Some("cat".to_string())
-            },
-            BoundingBox {
-                x1: 300,
-                y1: 50,
-                x2: 500,
-                y2: 400,
-                mention: Some("dog".to_string())
-            },
-        ]))
+        Some(Pointing {
+            boxes: vec![
+                BoundingBox {
+                    x1: 10,
+                    y1: 20,
+                    x2: 100,
+                    y2: 200,
+                    mention: Some("cat".to_string())
+                },
+                BoundingBox {
+                    x1: 300,
+                    y1: 50,
+                    x2: 500,
+                    y2: 400,
+                    mention: Some("dog".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -171,10 +177,13 @@ async fn point_format() {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Points(vec![Point {
-            x: 150,
-            y: 250,
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            points: vec![Point {
+                x: 150,
+                y: 250,
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }

@@ -12,13 +12,16 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![BoundingBox {
-            x1: 10,
-            y1: 20,
-            x2: 100,
-            y2: 200,
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            boxes: vec![BoundingBox {
+                x1: 10,
+                y1: 20,
+                x2: 100,
+                y2: 200,
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }
 
@@ -69,22 +72,25 @@ async fn with_classes() {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![
-            BoundingBox {
-                x1: 10,
-                y1: 20,
-                x2: 100,
-                y2: 200,
-                mention: Some("cat".to_string()),
-            },
-            BoundingBox {
-                x1: 300,
-                y1: 400,
-                x2: 500,
-                y2: 600,
-                mention: Some("dog".to_string()),
-            },
-        ]))
+        Some(Pointing {
+            boxes: vec![
+                BoundingBox {
+                    x1: 10,
+                    y1: 20,
+                    x2: 100,
+                    y2: 200,
+                    mention: Some("cat".to_string()),
+                },
+                BoundingBox {
+                    x1: 300,
+                    y1: 400,
+                    x2: 500,
+                    y2: 600,
+                    mention: Some("dog".to_string()),
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -103,29 +109,32 @@ async fn multiple_detections() {
 
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![
-            BoundingBox {
-                x1: 50,
-                y1: 30,
-                x2: 200,
-                y2: 500,
-                mention: Some("person".to_string())
-            },
-            BoundingBox {
-                x1: 400,
-                y1: 200,
-                x2: 700,
-                y2: 450,
-                mention: Some("car".to_string())
-            },
-            BoundingBox {
-                x1: 750,
-                y1: 50,
-                x2: 900,
-                y2: 500,
-                mention: Some("tree".to_string())
-            },
-        ]))
+        Some(Pointing {
+            boxes: vec![
+                BoundingBox {
+                    x1: 50,
+                    y1: 30,
+                    x2: 200,
+                    y2: 500,
+                    mention: Some("person".to_string())
+                },
+                BoundingBox {
+                    x1: 400,
+                    y1: 200,
+                    x2: 700,
+                    y2: 450,
+                    mention: Some("car".to_string())
+                },
+                BoundingBox {
+                    x1: 750,
+                    y1: 50,
+                    x2: 900,
+                    y2: 500,
+                    mention: Some("tree".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -144,22 +153,25 @@ async fn collection() {
 
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![
-            BoundingBox {
-                x1: 10,
-                y1: 20,
-                x2: 100,
-                y2: 200,
-                mention: Some("cat".to_string())
-            },
-            BoundingBox {
-                x1: 300,
-                y1: 50,
-                x2: 500,
-                y2: 400,
-                mention: Some("cat".to_string())
-            },
-        ]))
+        Some(Pointing {
+            boxes: vec![
+                BoundingBox {
+                    x1: 10,
+                    y1: 20,
+                    x2: 100,
+                    y2: 200,
+                    mention: Some("cat".to_string())
+                },
+                BoundingBox {
+                    x1: 300,
+                    y1: 50,
+                    x2: 500,
+                    y2: 400,
+                    mention: Some("cat".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
