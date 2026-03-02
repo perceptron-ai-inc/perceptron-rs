@@ -82,11 +82,14 @@ async fn point_format() {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Points(vec![Point {
-            x: 100,
-            y: 200,
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            points: vec![Point {
+                x: 100,
+                y: 200,
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }
 
@@ -106,13 +109,16 @@ async fn box_format() {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![BoundingBox {
-            x1: 10,
-            y1: 20,
-            x2: 100,
-            y2: 200,
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            boxes: vec![BoundingBox {
+                x1: 10,
+                y1: 20,
+                x2: 100,
+                y2: 200,
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }
 
@@ -132,10 +138,13 @@ async fn polygon_format() {
     assert!(response.content.is_some());
     assert_eq!(
         response.pointing,
-        Some(Pointing::Polygons(vec![Polygon {
-            hull: vec![(0, 0), (100, 0), (100, 100)],
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            polygons: vec![Polygon {
+                hull: vec![(0, 0), (100, 0), (100, 100)],
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }
 
@@ -154,23 +163,26 @@ async fn multiple_points() {
 
     assert_eq!(
         response.pointing,
-        Some(Pointing::Points(vec![
-            Point {
-                x: 150,
-                y: 200,
-                mention: Some("left eye".to_string())
-            },
-            Point {
-                x: 250,
-                y: 200,
-                mention: Some("right eye".to_string())
-            },
-            Point {
-                x: 200,
-                y: 280,
-                mention: Some("nose".to_string())
-            },
-        ]))
+        Some(Pointing {
+            points: vec![
+                Point {
+                    x: 150,
+                    y: 200,
+                    mention: Some("left eye".to_string())
+                },
+                Point {
+                    x: 250,
+                    y: 200,
+                    mention: Some("right eye".to_string())
+                },
+                Point {
+                    x: 200,
+                    y: 280,
+                    mention: Some("nose".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -189,29 +201,32 @@ async fn multiple_boxes() {
 
     assert_eq!(
         response.pointing,
-        Some(Pointing::Boxes(vec![
-            BoundingBox {
-                x1: 10,
-                y1: 20,
-                x2: 100,
-                y2: 200,
-                mention: Some("cat".to_string())
-            },
-            BoundingBox {
-                x1: 300,
-                y1: 50,
-                x2: 500,
-                y2: 400,
-                mention: Some("dog".to_string())
-            },
-            BoundingBox {
-                x1: 600,
-                y1: 10,
-                x2: 700,
-                y2: 80,
-                mention: Some("bird".to_string())
-            },
-        ]))
+        Some(Pointing {
+            boxes: vec![
+                BoundingBox {
+                    x1: 10,
+                    y1: 20,
+                    x2: 100,
+                    y2: 200,
+                    mention: Some("cat".to_string())
+                },
+                BoundingBox {
+                    x1: 300,
+                    y1: 50,
+                    x2: 500,
+                    y2: 400,
+                    mention: Some("dog".to_string())
+                },
+                BoundingBox {
+                    x1: 600,
+                    y1: 10,
+                    x2: 700,
+                    y2: 80,
+                    mention: Some("bird".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -230,16 +245,19 @@ async fn multiple_polygons() {
 
     assert_eq!(
         response.pointing,
-        Some(Pointing::Polygons(vec![
-            Polygon {
-                hull: vec![(100, 50), (200, 10), (300, 50)],
-                mention: Some("roof".to_string())
-            },
-            Polygon {
-                hull: vec![(100, 50), (300, 50), (300, 200), (100, 200)],
-                mention: Some("wall".to_string())
-            },
-        ]))
+        Some(Pointing {
+            polygons: vec![
+                Polygon {
+                    hull: vec![(100, 50), (200, 10), (300, 50)],
+                    mention: Some("roof".to_string())
+                },
+                Polygon {
+                    hull: vec![(100, 50), (300, 50), (300, 200), (100, 200)],
+                    mention: Some("wall".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -258,23 +276,26 @@ async fn collection_with_inheritance() {
 
     assert_eq!(
         response.pointing,
-        Some(Pointing::Points(vec![
-            Point {
-                x: 150,
-                y: 200,
-                mention: Some("person".to_string())
-            },
-            Point {
-                x: 250,
-                y: 200,
-                mention: Some("person".to_string())
-            },
-            Point {
-                x: 500,
-                y: 400,
-                mention: Some("ball".to_string())
-            },
-        ]))
+        Some(Pointing {
+            points: vec![
+                Point {
+                    x: 150,
+                    y: 200,
+                    mention: Some("person".to_string())
+                },
+                Point {
+                    x: 250,
+                    y: 200,
+                    mention: Some("person".to_string())
+                },
+                Point {
+                    x: 500,
+                    y: 400,
+                    mention: Some("ball".to_string())
+                },
+            ],
+            ..Default::default()
+        })
     );
 }
 
@@ -361,10 +382,13 @@ async fn all_generation_params() {
     assert_eq!(response.reasoning, Some("I see fur".to_string()));
     assert_eq!(
         response.pointing,
-        Some(Pointing::Points(vec![Point {
-            x: 50,
-            y: 60,
-            mention: Some("cat".to_string()),
-        }]))
+        Some(Pointing {
+            points: vec![Point {
+                x: 50,
+                y: 60,
+                mention: Some("cat".to_string()),
+            }],
+            ..Default::default()
+        })
     );
 }

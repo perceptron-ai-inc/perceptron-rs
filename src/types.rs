@@ -371,17 +371,19 @@ pub struct TextResponse {
     pub reasoning: Option<String>,
 }
 
-/// Pointing data extracted from model output — exactly one spatial type.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+/// Pointing data extracted from model output.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
-pub enum Pointing {
+pub struct Pointing {
     /// Point annotations.
-    Points(Vec<Point>),
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub points: Vec<Point>,
     /// Bounding box annotations.
-    Boxes(Vec<BoundingBox>),
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub boxes: Vec<BoundingBox>,
     /// Polygon annotations.
-    Polygons(Vec<Polygon>),
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub polygons: Vec<Polygon>,
 }
 
 /// Response for spatial methods (analyze, caption, detect).

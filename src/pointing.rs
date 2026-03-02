@@ -47,32 +47,19 @@ fn parse_coords(body: &str) -> Vec<(u32, u32)> {
 
 /// Extract annotations from model output text based on the output format.
 pub(crate) fn extract(text: &str, format: &OutputFormat) -> Option<Pointing> {
+    let mut pointing = Pointing::default();
     match format {
-        OutputFormat::Point => {
-            let points = extract_items(text, item_regex(format), parse_point);
-            if points.is_empty() {
-                None
-            } else {
-                Some(Pointing::Points(points))
-            }
-        }
-        OutputFormat::Box => {
-            let boxes = extract_items(text, item_regex(format), parse_box);
-            if boxes.is_empty() {
-                None
-            } else {
-                Some(Pointing::Boxes(boxes))
-            }
-        }
-        OutputFormat::Polygon => {
-            let polygons = extract_items(text, item_regex(format), parse_polygon);
-            if polygons.is_empty() {
-                None
-            } else {
-                Some(Pointing::Polygons(polygons))
-            }
-        }
-        OutputFormat::Text => None,
+        OutputFormat::Point => pointing.points = extract_items(text, item_regex(format), parse_point),
+        OutputFormat::Box => pointing.boxes = extract_items(text, item_regex(format), parse_box),
+        OutputFormat::Polygon => pointing.polygons = extract_items(text, item_regex(format), parse_polygon),
+        OutputFormat::Text => return None,
+    }
+    // Omit pointing entirely when nothing was extracted, following the API
+    // convention of absent fields rather than empty arrays.
+    if pointing == Pointing::default() {
+        None
+    } else {
+        Some(pointing)
     }
 }
 
@@ -146,11 +133,14 @@ mod tests {
         let result = extract(text, &OutputFormat::Point);
         assert_eq!(
             result,
-            Some(Pointing::Points(vec![Point {
-                x: 100,
-                y: 200,
-                mention: Some("target".to_string()),
-            }]))
+            Some(Pointing {
+                points: vec![Point {
+                    x: 100,
+                    y: 200,
+                    mention: Some("target".to_string()),
+                }],
+                ..Default::default()
+            })
         );
     }
 
@@ -160,13 +150,16 @@ mod tests {
         let result = extract(text, &OutputFormat::Box);
         assert_eq!(
             result,
-            Some(Pointing::Boxes(vec![BoundingBox {
-                x1: 10,
-                y1: 20,
-                x2: 100,
-                y2: 200,
-                mention: Some("cat".to_string()),
-            }]))
+            Some(Pointing {
+                boxes: vec![BoundingBox {
+                    x1: 10,
+                    y1: 20,
+                    x2: 100,
+                    y2: 200,
+                    mention: Some("cat".to_string()),
+                }],
+                ..Default::default()
+            })
         );
     }
 
@@ -176,10 +169,13 @@ mod tests {
         let result = extract(text, &OutputFormat::Polygon);
         assert_eq!(
             result,
-            Some(Pointing::Polygons(vec![Polygon {
-                hull: vec![(0, 0), (100, 0), (100, 100)],
-                mention: Some("triangle".to_string()),
-            }]))
+            Some(Pointing {
+                polygons: vec![Polygon {
+                    hull: vec![(0, 0), (100, 0), (100, 100)],
+                    mention: Some("triangle".to_string()),
+                }],
+                ..Default::default()
+            })
         );
     }
 
@@ -190,10 +186,7 @@ mod tests {
             <point_box mention="explicit"> (50,60) (70,80) </point_box>
         </collection>"#;
         let result = extract(text, &OutputFormat::Box);
-        let boxes = match result {
-            Some(Pointing::Boxes(b)) => b,
-            other => panic!("Expected Pointing::Boxes, got {:?}", other),
-        };
+        let boxes = &result.expect("expected Some(Pointing)").boxes;
         assert_eq!(boxes.len(), 2);
         assert_eq!(boxes[0].mention, Some("cat".to_string()));
         // Child with explicit mention keeps its own
@@ -210,10 +203,7 @@ mod tests {
             <point_box mention="bird"> (50,60) (70,80) </point_box>
         "#;
         let result = extract(text, &OutputFormat::Box);
-        let boxes = match result {
-            Some(Pointing::Boxes(b)) => b,
-            other => panic!("Expected Pointing::Boxes, got {:?}", other),
-        };
+        let boxes = &result.expect("expected Some(Pointing)").boxes;
         assert_eq!(boxes.len(), 3);
         // Collections are processed first, then standalone items
         assert_eq!(boxes[0].mention, Some("cat".to_string()));
@@ -241,10 +231,7 @@ mod tests {
             <point t=0.5> (50,60) </point>
         "#;
         let result = extract(text, &OutputFormat::Point);
-        let points = match result {
-            Some(Pointing::Points(p)) => p,
-            other => panic!("Expected Pointing::Points, got {:?}", other),
-        };
+        let points = &result.expect("expected Some(Pointing)").points;
         assert_eq!(points.len(), 3);
         assert_eq!(
             points[0],
