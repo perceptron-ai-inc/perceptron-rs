@@ -162,4 +162,5 @@ mod tests {
         assert!(matches!(media.media_type(), MediaType::Video));
         assert_eq!(media.to_url(), "data:video/mp4;base64,xyz789");
     }
+
 }

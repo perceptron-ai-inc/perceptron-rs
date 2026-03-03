@@ -3,7 +3,7 @@ use reqwest::Client;
 use crate::chat_completions::*;
 use crate::error::PerceptronError;
 use crate::media::*;
-use crate::pointing;
+use crate::parsing;
 use crate::types::*;
 
 /// Client for the Perceptron SDK.
@@ -74,7 +74,7 @@ impl PerceptronClient {
                     .message
                     .content
                     .as_deref()
-                    .and_then(|text| pointing::extract(text, output_format));
+                    .and_then(|text| parsing::extract(text, output_format));
                 PointingResponse {
                     content: choice.message.content,
                     reasoning: choice.message.reasoning_content,
