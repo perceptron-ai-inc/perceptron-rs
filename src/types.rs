@@ -4,7 +4,7 @@ use crate::media::Media;
 use crate::pointing::Pointing;
 
 /// Output format for model responses.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum OutputFormat {
@@ -20,7 +20,7 @@ pub enum OutputFormat {
 }
 
 /// Style for caption requests.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum CaptionStyle {
@@ -32,7 +32,7 @@ pub enum CaptionStyle {
 }
 
 /// Output mode for OCR requests.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum OcrMode {
@@ -96,7 +96,7 @@ macro_rules! generation_param_setters {
 ///
 /// Use [`AnalyzeRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct AnalyzeRequest {
     /// User message or prompt to send.
@@ -154,7 +154,7 @@ impl AnalyzeRequest {
 ///
 /// Use [`CaptionRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct CaptionRequest {
     /// Media to caption.
@@ -218,7 +218,7 @@ impl CaptionRequest {
 ///
 /// Use [`OcrRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct OcrRequest {
     /// Media to extract text from.
@@ -273,7 +273,7 @@ impl OcrRequest {
 ///
 /// Use [`DetectRequest::new`] to create a request with required fields,
 /// then chain optional setters using the builder pattern.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct DetectRequest {
     /// Media to detect objects in.
@@ -325,7 +325,7 @@ impl DetectRequest {
 }
 
 /// Response for text-only methods (ocr, question).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct TextResponse {
     /// The main response content from the model.
@@ -335,7 +335,7 @@ pub struct TextResponse {
 }
 
 /// Response for spatial methods (analyze, caption, detect).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct PointingResponse {
     /// The main response content from the model.
