@@ -263,11 +263,11 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
     }
 
     let media_url = desc.media.to_url();
-    let media_part = match desc.media.media_type() {
-        MediaType::Image => ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
+    let media_part = match desc.media.modality() {
+        Modality::Image => ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
             image_url: ImageUrl { url: media_url },
         }),
-        MediaType::Video => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
+        Modality::Video => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
             video_url: VideoUrl { url: media_url },
         }),
     };
