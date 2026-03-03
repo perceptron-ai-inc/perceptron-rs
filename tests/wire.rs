@@ -34,7 +34,7 @@ fn analyze_request_all_fields() {
         .max_completion_tokens(100),
         json!({
             "message": "Describe this",
-            "media": {"type": "url", "media_type": "image", "src": "https://example.com/img.jpg"},
+            "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
             "output_format": "point",
             "model": "model-v1",
             "reasoning": true,
@@ -90,7 +90,7 @@ fn ocr_request_all_fields() {
             .presence_penalty(0.125)
             .max_completion_tokens(100),
         json!({
-            "media": {"type": "url", "media_type": "image", "src": "https://example.com/doc.jpg"},
+            "media": {"type": "url", "modality": "image", "src": "https://example.com/doc.jpg"},
             "mode": "markdown",
             "model": "model-v1",
             "reasoning": true,
@@ -117,7 +117,7 @@ fn detect_request_all_fields() {
             .presence_penalty(0.125)
             .max_completion_tokens(100),
         json!({
-            "media": {"type": "url", "media_type": "video", "src": "https://example.com/vid.mp4"},
+            "media": {"type": "url", "modality": "video", "src": "https://example.com/vid.mp4"},
             "classes": ["cat", "dog"],
             "model": "model-v1",
             "reasoning": true,
