@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// The type of media being processed.
-#[derive(Debug, Clone, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -13,7 +13,7 @@ pub enum MediaType {
 }
 
 /// Media encoding format.
-#[derive(Debug, Clone, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -46,7 +46,7 @@ impl MediaFormat {
 }
 
 /// Media for a request — either a URL or base64-encoded data.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Media {
