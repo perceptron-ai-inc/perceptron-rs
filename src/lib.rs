@@ -1,3 +1,4 @@
+mod api;
 mod chat_completions;
 mod client;
 mod error;
@@ -6,8 +7,8 @@ mod parsing;
 mod pointing;
 mod types;
 
-pub use chat_completions::error::ApiErrorDetail;
 pub use client::{Perceptron, PerceptronClient};
+pub use error::ApiErrorDetail;
 pub use error::PerceptronError;
 pub use media::{Media, MediaFormat, Modality};
 pub use pointing::{BoundingBox, Point, Pointing, Polygon};

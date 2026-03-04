@@ -1,5 +1,20 @@
-use crate::chat_completions::ChatCompletionError;
-use crate::chat_completions::error::ApiErrorDetail;
+use serde::Deserialize;
+
+/// OpenAI-compatible error detail.
+#[derive(Debug, Deserialize, Clone)]
+pub struct ApiErrorDetail {
+    pub message: String,
+    #[serde(rename = "type")]
+    pub error_type: Option<String>,
+    pub param: Option<String>,
+    pub code: Option<String>,
+}
+
+/// OpenAI-compatible error response.
+#[derive(Debug, Deserialize, Clone)]
+pub struct ApiErrorResponse {
+    pub error: ApiErrorDetail,
+}
 
 /// Errors that can occur when using the Perceptron SDK.
 #[derive(Debug, thiserror::Error)]
@@ -15,17 +30,4 @@ pub enum PerceptronError {
     /// Failed to parse the API response.
     #[error("Failed to parse response: {0}")]
     ParseFailed(String),
-}
-
-impl From<ChatCompletionError> for PerceptronError {
-    fn from(err: ChatCompletionError) -> Self {
-        match err {
-            ChatCompletionError::RequestFailed(msg) => PerceptronError::RequestFailed(msg),
-            ChatCompletionError::ApiError { status, detail } => PerceptronError::ApiError {
-                status: status.as_u16(),
-                detail,
-            },
-            ChatCompletionError::ParseFailed(msg) => PerceptronError::ParseFailed(msg),
-        }
-    }
 }

@@ -1,5 +1,6 @@
 use reqwest::Client;
 
+use crate::api::ApiClient;
 use crate::chat_completions::*;
 use crate::error::PerceptronError;
 use crate::media::*;
@@ -9,43 +10,41 @@ use crate::types::*;
 /// Client for the Perceptron SDK.
 #[derive(Clone, Debug)]
 pub struct PerceptronClient {
-    chat_completions: ChatCompletionsClient,
+    api: ApiClient,
 }
 
 impl PerceptronClient {
     /// Create a new client with default settings.
     pub fn new() -> Self {
-        Self {
-            chat_completions: ChatCompletionsClient::new(),
-        }
+        Self { api: ApiClient::new() }
     }
 
     /// Set the base URL for the model. Defaults to `https://api.perceptron.inc`.
     pub fn base_url(mut self, url: impl Into<String>) -> Self {
-        self.chat_completions.set_base_url(url.into());
+        self.api.base_url = url.into();
         self
     }
 
     /// Set the API key for authentication.
     pub fn api_key(mut self, key: impl Into<String>) -> Self {
-        self.chat_completions.set_api_key(key.into());
+        self.api.api_key = Some(key.into());
         self
     }
 
     /// Add a custom header to include on every request.
     pub fn header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
-        self.chat_completions.set_header(name.into(), value.into());
+        self.api.headers.insert(name.into(), value.into());
         self
     }
 
     /// Set the HTTP client to use for requests.
     pub fn http_client(mut self, client: Client) -> Self {
-        self.chat_completions.set_http_client(client);
+        self.api.http = client;
         self
     }
 
     async fn send(&self, wire_request: CreateChatCompletionRequest) -> Result<TextResponse, PerceptronError> {
-        let completion = self.chat_completions.complete(wire_request).await?;
+        let completion = self.api.chat_completions(wire_request).await?;
 
         let response = match completion.choices.into_iter().next() {
             Some(choice) => TextResponse {
@@ -66,7 +65,7 @@ impl PerceptronClient {
         wire_request: CreateChatCompletionRequest,
         output_format: &OutputFormat,
     ) -> Result<PointingResponse, PerceptronError> {
-        let completion = self.chat_completions.complete(wire_request).await?;
+        let completion = self.api.chat_completions(wire_request).await?;
 
         let response = match completion.choices.into_iter().next() {
             Some(choice) => {
