@@ -20,5 +20,6 @@ thiserror = "2.0.18"
 tokio = { version = "1.49.0", features = ["full"] }
 
 [dev-dependencies]
+rstest = "0.26.1"
 tokio = { version = "1.49.0", features = ["full", "macros"] }
 wiremock = "0.6"

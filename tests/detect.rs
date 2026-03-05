@@ -1,4 +1,5 @@
 use perceptron_ai::{BoundingBox, DetectRequest, Media, MediaFormat, Perceptron, Pointing};
+use rstest::rstest;
 use serde_json::json;
 use wiremock::matchers::body_partial_json;
 
@@ -25,16 +26,23 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
     );
 }
 
+#[rstest]
+#[case::isaac("isaac-test", "Your goal is to segment out the objects in the scene")]
+#[case::qwen(
+    "qwen3-vl-72b",
+    "Locate every object of interest and report bounding box coordinates in JSON format."
+)]
+#[case::unknown_defaults_to_isaac("unknown-model", "Your goal is to segment out the objects in the scene")]
 #[tokio::test]
-async fn general_detection() {
+async fn general_detection(#[case] model: &str, #[case] expected_system: &str) {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "model": "test-model",
+            "model": model,
             "messages": [
                 {"role": "system", "content": "<hint>BOX</hint>"},
-                {"role": "system", "content": "Your goal is to segment out the objects in the scene"},
+                {"role": "system", "content": expected_system},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}}
                 ]}
@@ -44,28 +52,33 @@ async fn general_detection() {
     )
     .await;
 
-    let request = DetectRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
+    let request = DetectRequest::new(model, Media::image_url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
-
     assert_single_cat_box(&response);
 }
 
+#[rstest]
+#[case::isaac("isaac-test", "Your goal is to segment out the following categories: cat, dog")]
+#[case::qwen(
+    "qwen3-vl-72b",
+    "Locate every instance that belongs to the following categories: \"cat, dog\". Report bbox coordinates in JSON format."
+)]
 #[tokio::test]
-async fn with_classes() {
+async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
         body_partial_json(json!({
             "messages": [
                 {"role": "system", "content": "<hint>BOX</hint>"},
-                {"role": "system", "content": "Your goal is to segment out the following categories: cat, dog"}
+                {"role": "system", "content": expected_system}
             ]
         })),
         common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,400) (500,600) </point_box>"#, None),
     )
     .await;
 
-    let request = DetectRequest::new("test-model", Media::image_url("https://example.com/img.jpg"))
+    let request = DetectRequest::new(model, Media::image_url("https://example.com/img.jpg"))
         .classes(vec!["cat".to_string(), "dog".to_string()]);
     let response = client.detect(request).await.unwrap();
 
@@ -104,7 +117,7 @@ async fn multiple_detections() {
     )
     .await;
 
-    let request = DetectRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
+    let request = DetectRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
 
     assert_eq!(
@@ -148,7 +161,7 @@ async fn collection() {
     )
     .await;
 
-    let request = DetectRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
+    let request = DetectRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
 
     assert_eq!(
@@ -193,7 +206,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = DetectRequest::new("test-model", Media::base64(MediaFormat::Png, "imgdata"));
+    let request = DetectRequest::new("isaac-test", Media::base64(MediaFormat::Png, "imgdata"));
     let response = client.detect(request).await.unwrap();
 
     assert_single_cat_box(&response);
@@ -214,7 +227,7 @@ async fn with_reasoning() {
     )
     .await;
 
-    let request = DetectRequest::new("test-model", Media::image_url("https://example.com/img.jpg")).reasoning(true);
+    let request = DetectRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg")).reasoning(true);
     let response = client.detect(request).await.unwrap();
 
     assert!(response.content.is_some());
