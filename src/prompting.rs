@@ -1,9 +1,7 @@
-use std::sync::LazyLock;
-
 use crate::types::{CaptionStyle, OcrMode};
 
 /// Prompt template for caption requests.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CaptionPromptTemplate {
     /// Optional system instruction for the caption endpoint.
     pub system: Option<&'static str>,
@@ -24,7 +22,7 @@ impl CaptionPromptTemplate {
 }
 
 /// Prompt template for OCR requests.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct OcrPromptTemplate {
     /// Optional system instruction for the OCR endpoint.
     pub system: Option<&'static str>,
@@ -48,7 +46,7 @@ impl OcrPromptTemplate {
 }
 
 /// Prompt template for detect requests.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DetectPromptTemplate {
     /// System text when no categories are specified.
     pub general: &'static str,
@@ -67,10 +65,8 @@ impl DetectPromptTemplate {
 }
 
 /// A collection of prompt templates for a specific model family.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PromptProfile {
-    /// Identifier key for this profile.
-    pub key: &'static str,
     /// Caption prompt template.
     pub caption: CaptionPromptTemplate,
     /// OCR prompt template.
@@ -84,7 +80,6 @@ pub struct PromptProfile {
 // ---------------------------------------------------------------------------
 
 const ISAAC: PromptProfile = PromptProfile {
-    key: "isaac-default",
     caption: CaptionPromptTemplate {
         system: None,
         concise: "Provide a concise, human-friendly caption for the upcoming image.",
@@ -106,7 +101,6 @@ const ISAAC: PromptProfile = PromptProfile {
 };
 
 const QWEN: PromptProfile = PromptProfile {
-    key: "qwen3-vl-235b-a22b-thinking",
     caption: CaptionPromptTemplate {
         system: None,
         concise: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",
@@ -124,74 +118,18 @@ const QWEN: PromptProfile = PromptProfile {
     },
 };
 
-// ---------------------------------------------------------------------------
-// Registry
-// ---------------------------------------------------------------------------
-
-struct PromptProfileRegistry {
-    profiles: Vec<&'static PromptProfile>,
-    aliases: Vec<(&'static str, &'static str)>,
-    prefixes: Vec<(&'static str, &'static str)>,
-}
-
-impl PromptProfileRegistry {
-    fn resolve(&self, model: &str) -> &'static PromptProfile {
-        let model_lower = model.to_lowercase();
-
-        // Exact key match
-        for profile in &self.profiles {
-            if profile.key == model_lower {
-                return profile;
-            }
-        }
-
-        // Alias match
-        for &(alias, key) in &self.aliases {
-            if alias == model_lower {
-                for profile in &self.profiles {
-                    if profile.key == key {
-                        return profile;
-                    }
-                }
-            }
-        }
-
-        // Prefix match
-        for &(prefix, key) in &self.prefixes {
-            if model_lower.starts_with(prefix) {
-                for profile in &self.profiles {
-                    if profile.key == key {
-                        return profile;
-                    }
-                }
-            }
-        }
-
-        // Default: first registered profile
-        self.profiles[0]
-    }
-}
-
-static REGISTRY: LazyLock<PromptProfileRegistry> = LazyLock::new(|| PromptProfileRegistry {
-    profiles: vec![&ISAAC, &QWEN],
-    aliases: vec![
-        ("default", "isaac-default"),
-        ("isaac", "isaac-default"),
-        ("perceptron", "isaac-default"),
-        ("isaac-0.1", "isaac-default"),
-        ("qwen", "qwen3-vl-235b-a22b-thinking"),
-        ("qwen3", "qwen3-vl-235b-a22b-thinking"),
-        ("qwen3-vl", "qwen3-vl-235b-a22b-thinking"),
-        ("qwen3-vl-235b", "qwen3-vl-235b-a22b-thinking"),
-    ],
-    prefixes: vec![("isaac-", "isaac-default"), ("qwen3-", "qwen3-vl-235b-a22b-thinking")],
-});
-
-/// Resolve the prompt profile for a given model name.
+/// Resolve the prompt profile for a given model name based on its prefix.
 ///
-/// Resolution order: exact key → alias → prefix → default (Isaac).
-pub fn resolve_prompt_profile(model: &str) -> &'static PromptProfile {
-    REGISTRY.resolve(model)
+/// Returns `None` if the model doesn't match any known profile.
+pub fn resolve_prompt_profile(model: &str) -> Option<&'static PromptProfile> {
+    let m = model.to_lowercase();
+    if m.starts_with("qwen") {
+        Some(&QWEN)
+    } else if m.starts_with("isaac") {
+        Some(&ISAAC)
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -199,47 +137,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn resolve_exact_key() {
-        let profile = resolve_prompt_profile("isaac-default");
-        assert_eq!(profile.key, "isaac-default");
-
-        let profile = resolve_prompt_profile("qwen3-vl-235b-a22b-thinking");
-        assert_eq!(profile.key, "qwen3-vl-235b-a22b-thinking");
+    fn resolve_isaac_models() {
+        assert_eq!(resolve_prompt_profile("isaac").unwrap(), &ISAAC);
+        assert_eq!(resolve_prompt_profile("isaac-default").unwrap(), &ISAAC);
+        assert_eq!(resolve_prompt_profile("isaac-2.0").unwrap(), &ISAAC);
     }
 
     #[test]
-    fn resolve_alias() {
-        let profile = resolve_prompt_profile("isaac");
-        assert_eq!(profile.key, "isaac-default");
-
-        let profile = resolve_prompt_profile("default");
-        assert_eq!(profile.key, "isaac-default");
-
-        let profile = resolve_prompt_profile("qwen");
-        assert_eq!(profile.key, "qwen3-vl-235b-a22b-thinking");
-
-        let profile = resolve_prompt_profile("qwen3-vl");
-        assert_eq!(profile.key, "qwen3-vl-235b-a22b-thinking");
+    fn resolve_qwen_models() {
+        assert_eq!(resolve_prompt_profile("qwen").unwrap(), &QWEN);
+        assert_eq!(resolve_prompt_profile("qwen3-vl").unwrap(), &QWEN);
+        assert_eq!(resolve_prompt_profile("qwen3-vl-72b").unwrap(), &QWEN);
+        assert_eq!(resolve_prompt_profile("qwen3-vl-235b-a22b-thinking").unwrap(), &QWEN);
     }
 
     #[test]
-    fn resolve_prefix_match() {
-        let profile = resolve_prompt_profile("qwen3-vl-72b");
-        assert_eq!(profile.key, "qwen3-vl-235b-a22b-thinking");
-
-        let profile = resolve_prompt_profile("isaac-2.0");
-        assert_eq!(profile.key, "isaac-default");
-    }
-
-    #[test]
-    fn resolve_default_fallback() {
-        let profile = resolve_prompt_profile("unknown-model");
-        assert_eq!(profile.key, "isaac-default");
+    fn resolve_unknown_returns_none() {
+        assert!(resolve_prompt_profile("unknown-model").is_none());
     }
 
     #[test]
     fn caption_user_text() {
-        let profile = resolve_prompt_profile("isaac");
+        let profile = resolve_prompt_profile("isaac").unwrap();
         assert_eq!(
             profile.caption.user_text(&CaptionStyle::Concise),
             "Provide a concise, human-friendly caption for the upcoming image."
@@ -253,13 +172,13 @@ mod tests {
     #[test]
     fn ocr_user_text() {
         // Isaac: plain → None, markdown/html → Some
-        let isaac = resolve_prompt_profile("isaac");
+        let isaac = resolve_prompt_profile("isaac").unwrap();
         assert_eq!(isaac.ocr.user_text(&OcrMode::Plain), None);
         assert!(isaac.ocr.user_text(&OcrMode::Markdown).is_some());
         assert!(isaac.ocr.user_text(&OcrMode::Html).is_some());
 
         // Qwen: plain → Some, markdown/html → Some
-        let qwen = resolve_prompt_profile("qwen");
+        let qwen = resolve_prompt_profile("qwen").unwrap();
         assert_eq!(
             qwen.ocr.user_text(&OcrMode::Plain),
             Some("Read all the text in the image.")
@@ -270,7 +189,7 @@ mod tests {
 
     #[test]
     fn detect_system_text_general() {
-        let profile = resolve_prompt_profile("isaac");
+        let profile = resolve_prompt_profile("isaac").unwrap();
         assert_eq!(
             profile.detect.system_text(None),
             "Your goal is to segment out the objects in the scene"
@@ -279,7 +198,7 @@ mod tests {
 
     #[test]
     fn detect_system_text_with_categories() {
-        let profile = resolve_prompt_profile("isaac");
+        let profile = resolve_prompt_profile("isaac").unwrap();
         let cats = vec!["cat".to_string(), "dog".to_string()];
         assert_eq!(
             profile.detect.system_text(Some(&cats)),
@@ -289,7 +208,7 @@ mod tests {
 
     #[test]
     fn detect_system_text_empty_categories() {
-        let profile = resolve_prompt_profile("isaac");
+        let profile = resolve_prompt_profile("isaac").unwrap();
         let cats: Vec<String> = vec![];
         assert_eq!(
             profile.detect.system_text(Some(&cats)),

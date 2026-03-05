@@ -156,13 +156,14 @@ impl Perceptron for PerceptronClient {
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()
             .collect();
-        if let Some(system) = profile.caption.system {
+        if let Some(system) = profile.and_then(|p| p.caption.system) {
             system_prompts.push(system.to_string());
         }
+        let user_text = profile.map(|p| p.caption.user_text(&request.style).to_string());
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
-            user_text: Some(profile.caption.user_text(&request.style).to_string()),
+            user_text,
             model: request.model,
             max_completion_tokens: request.max_completion_tokens,
             temperature: request.temperature,
@@ -177,10 +178,10 @@ impl Perceptron for PerceptronClient {
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
         let profile = prompting::resolve_prompt_profile(&request.model);
         let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
-        if let Some(system) = profile.ocr.system {
+        if let Some(system) = profile.and_then(|p| p.ocr.system) {
             system_prompts.push(system.to_string());
         }
-        let user_text = profile.ocr.user_text(&request.mode).map(|s| s.to_string());
+        let user_text = profile.and_then(|p| p.ocr.user_text(&request.mode)).map(|s| s.to_string());
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -198,11 +199,12 @@ impl Perceptron for PerceptronClient {
 
     async fn detect(&self, request: DetectRequest) -> Result<PointingResponse, PerceptronError> {
         let profile = prompting::resolve_prompt_profile(&request.model);
-        let domain_system = profile.detect.system_text(request.classes.as_deref());
         let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
             .into_iter()
             .collect();
-        system_prompts.push(domain_system);
+        if let Some(p) = profile {
+            system_prompts.push(p.detect.system_text(request.classes.as_deref()));
+        }
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,

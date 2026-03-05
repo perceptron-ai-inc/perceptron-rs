@@ -10,7 +10,7 @@ async fn plain_default() {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "model": "test-model",
+            "model": "isaac-test",
             "messages": [
                 {
                     "role": "system",
@@ -28,7 +28,7 @@ async fn plain_default() {
     )
     .await;
 
-    let request = OcrRequest::new("test-model", Media::image_url("https://example.com/doc.jpg"));
+    let request = OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg"));
     let response = client.ocr(request).await.unwrap();
 
     assert_eq!(response.content, Some("Hello World".to_string()));
@@ -53,7 +53,7 @@ async fn markdown_mode() {
     .await;
 
     let request =
-        OcrRequest::new("test-model", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
+        OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
     let response = client.ocr(request).await.unwrap();
 
     assert_eq!(response.content, Some("# Hello\n\nWorld".to_string()));
@@ -77,7 +77,7 @@ async fn html_mode() {
     )
     .await;
 
-    let request = OcrRequest::new("test-model", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Html);
+    let request = OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Html);
     let response = client.ocr(request).await.unwrap();
 
     assert_eq!(response.content, Some("<p>Hello World</p>".to_string()));
@@ -100,7 +100,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = OcrRequest::new("test-model", Media::base64(MediaFormat::Webp, "docdata"));
+    let request = OcrRequest::new("isaac-test", Media::base64(MediaFormat::Webp, "docdata"));
     let response = client.ocr(request).await.unwrap();
 
     assert_eq!(response.content, Some("Hello World".to_string()));
@@ -121,7 +121,7 @@ async fn with_reasoning() {
     )
     .await;
 
-    let request = OcrRequest::new("test-model", Media::image_url("https://example.com/doc.jpg")).reasoning(true);
+    let request = OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).reasoning(true);
     let response = client.ocr(request).await.unwrap();
 
     assert_eq!(response.content, Some("Hello".to_string()));

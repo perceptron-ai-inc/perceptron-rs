@@ -5,6 +5,7 @@ use wiremock::matchers::body_partial_json;
 mod common;
 
 const QWEN_MODEL: &str = "qwen3-vl-72b";
+const UNKNOWN_MODEL: &str = "unknown-model";
 
 fn box_content() -> &'static str {
     r#"<point_box mention="cat"> (10,20) (100,200) </point_box>"#
@@ -147,6 +148,76 @@ async fn qwen_detect_with_classes() {
 
     let request = DetectRequest::new(QWEN_MODEL, Media::image_url("https://example.com/img.jpg"))
         .classes(vec!["cat".to_string(), "dog".to_string()]);
+    let response = client.detect(request).await.unwrap();
+    assert!(response.content.is_some());
+}
+
+// Unknown model — no profile prompts injected
+
+#[tokio::test]
+async fn unknown_caption_no_user_text() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": UNKNOWN_MODEL,
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = CaptionRequest::new(UNKNOWN_MODEL, Media::image_url("https://example.com/img.jpg"));
+    let response = client.caption(request).await.unwrap();
+    assert!(response.content.is_some());
+}
+
+#[tokio::test]
+async fn unknown_ocr_no_prompts() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": UNKNOWN_MODEL,
+            "messages": [
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response("Hello World", None),
+    )
+    .await;
+
+    let request = OcrRequest::new(UNKNOWN_MODEL, Media::image_url("https://example.com/doc.jpg"));
+    let response = client.ocr(request).await.unwrap();
+    assert_eq!(response.content, Some("Hello World".to_string()));
+}
+
+#[tokio::test]
+async fn unknown_detect_no_domain_system() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": UNKNOWN_MODEL,
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = DetectRequest::new(UNKNOWN_MODEL, Media::image_url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
     assert!(response.content.is_some());
 }

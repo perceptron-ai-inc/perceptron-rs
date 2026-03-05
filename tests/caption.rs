@@ -33,7 +33,7 @@ async fn concise_default() {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "model": "test-model",
+            "model": "isaac-test",
             "messages": [
                 {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
@@ -46,7 +46,7 @@ async fn concise_default() {
     )
     .await;
 
-    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
+    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
     let response = client.caption(request).await.unwrap();
 
     assert_single_cat_box(&response);
@@ -70,7 +70,7 @@ async fn detailed_style() {
     )
     .await;
 
-    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"))
+    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"))
         .style(CaptionStyle::Detailed);
     let response = client.caption(request).await.unwrap();
 
@@ -89,7 +89,7 @@ async fn with_reasoning() {
     )
     .await;
 
-    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg")).reasoning(true);
+    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg")).reasoning(true);
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());
@@ -106,7 +106,7 @@ async fn multiple_boxes() {
     )
     .await;
 
-    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"));
+    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());
@@ -152,7 +152,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = CaptionRequest::new("test-model", Media::base64(MediaFormat::Jpeg, "imgdata"));
+    let request = CaptionRequest::new("isaac-test", Media::base64(MediaFormat::Jpeg, "imgdata"));
     let response = client.caption(request).await.unwrap();
 
     assert_single_cat_box(&response);
@@ -170,7 +170,7 @@ async fn point_format() {
     )
     .await;
 
-    let request = CaptionRequest::new("test-model", Media::image_url("https://example.com/img.jpg"))
+    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"))
         .output_format(OutputFormat::Point);
     let response = client.caption(request).await.unwrap();
 
