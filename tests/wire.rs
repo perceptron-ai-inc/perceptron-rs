@@ -1,6 +1,6 @@
 use perceptron_ai::{
-    AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Media, MediaFormat, OcrMode, OcrRequest, OutputFormat,
-    Point, Pointing, PointingResponse, TextResponse,
+    AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Media, MediaFormat, Modality, Model, OcrMode,
+    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, SamplingParameter, TextResponse,
 };
 use serde_json::json;
 
@@ -127,6 +127,37 @@ fn detect_request_all_fields() {
             "frequency_penalty": 0.5,
             "presence_penalty": 0.125,
             "max_completion_tokens": 100
+        }),
+    );
+}
+
+// --- Models ---
+
+#[test]
+fn model_all_fields() {
+    roundtrip(
+        &Model {
+            id: "isaac-0.1".to_string(),
+            name: "Isaac".to_string(),
+            modalities: vec![Modality::Image, Modality::Video],
+            output_formats: vec![
+                OutputFormat::Text,
+                OutputFormat::Point,
+                OutputFormat::Box,
+                OutputFormat::Polygon,
+            ],
+            sampling_parameters: vec![SamplingParameter::Temperature, SamplingParameter::TopP],
+            max_context_tokens: 128000,
+            max_output_tokens: 4096,
+        },
+        json!({
+            "id": "isaac-0.1",
+            "name": "Isaac",
+            "modalities": ["image", "video"],
+            "output_formats": ["text", "point", "box", "polygon"],
+            "sampling_parameters": ["temperature", "top_p"],
+            "max_context_tokens": 128000,
+            "max_output_tokens": 4096
         }),
     );
 }
