@@ -1,9 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-// ============================================================================
-// Request Types
-// ============================================================================
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatCompletionContentPartText {
     pub text: String,
@@ -84,10 +80,6 @@ pub struct CreateChatCompletionRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f32>,
 }
-
-// ============================================================================
-// Response Types
-// ============================================================================
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ChatCompletionResponseMessage {
