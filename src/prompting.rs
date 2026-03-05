@@ -120,14 +120,8 @@ const QWEN: PromptProfile = PromptProfile {
 
 /// Resolve the prompt profile for a given model name based on its prefix.
 ///
-/// Returns `None` if the model doesn't match any known profile.
-pub fn resolve_prompt_profile(model: &str) -> Option<&'static PromptProfile> {
+/// Defaults to Isaac if no specific profile matches.
+pub fn resolve_prompt_profile(model: &str) -> &'static PromptProfile {
     let m = model.to_lowercase();
-    if m.starts_with("qwen") {
-        Some(&QWEN)
-    } else if m.starts_with("isaac") {
-        Some(&ISAAC)
-    } else {
-        None
-    }
+    if m.starts_with("qwen") { &QWEN } else { &ISAAC }
 }
