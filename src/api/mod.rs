@@ -1,5 +1,5 @@
-pub(crate) mod chat_completions;
+pub mod chat_completions;
 mod client;
-pub(crate) mod models;
+pub mod models;
 
-pub(crate) use client::ApiClient;
+pub use client::ApiClient;
