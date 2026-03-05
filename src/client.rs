@@ -5,6 +5,7 @@ use crate::chat_completions::*;
 use crate::error::PerceptronError;
 use crate::media::*;
 use crate::parsing;
+use crate::prompting;
 use crate::types::*;
 
 /// Client for the Perceptron SDK.
@@ -134,18 +135,17 @@ impl Perceptron for PerceptronClient {
 
     async fn caption(&self, request: CaptionRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.unwrap_or(OutputFormat::Box);
-        let user_text = match request.style {
-            CaptionStyle::Concise => "Provide a concise, human-friendly caption for the upcoming image.",
-            CaptionStyle::Detailed => {
-                "Provide a detailed caption describing key objects, relationships, and context in the upcoming image."
-            }
-        };
+        let profile = prompting::resolve_prompt_profile(&request.model);
+        let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
+            .into_iter()
+            .collect();
+        if let Some(system) = profile.caption.system {
+            system_prompts.push(system.to_string());
+        }
         let desc = RequestDescriptor {
             media: request.media,
-            system_prompts: system_hint(Some(&output_format), request.reasoning)
-                .into_iter()
-                .collect(),
-            user_text: Some(user_text.to_string()),
+            system_prompts,
+            user_text: Some(profile.caption.user_text(&request.style).to_string()),
             model: request.model,
             max_completion_tokens: request.max_completion_tokens,
             temperature: request.temperature,
@@ -158,19 +158,12 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
-        let ocr_system = "You are an OCR (Optical Character Recognition) system. \
-            Accurately detect, extract, and transcribe all readable text from the image.";
+        let profile = prompting::resolve_prompt_profile(&request.model);
         let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
-        system_prompts.push(ocr_system.to_string());
-        let user_text = match request.mode {
-            OcrMode::Plain => None,
-            OcrMode::Markdown => Some(
-                "Transcribe every readable word in the image using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.".to_string(),
-            ),
-            OcrMode::Html => Some(
-                "Transcribe every readable word in the image using HTML markup.".to_string(),
-            ),
-        };
+        if let Some(system) = profile.ocr.system {
+            system_prompts.push(system.to_string());
+        }
+        let user_text = profile.ocr.user_text(&request.mode).map(|s| s.to_string());
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -187,15 +180,8 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn detect(&self, request: DetectRequest) -> Result<PointingResponse, PerceptronError> {
-        let domain_system = match &request.classes {
-            Some(classes) if !classes.is_empty() => {
-                format!(
-                    "Your goal is to segment out the following categories: {}",
-                    classes.join(", ")
-                )
-            }
-            _ => "Your goal is to segment out the objects in the scene".to_string(),
-        };
+        let profile = prompting::resolve_prompt_profile(&request.model);
+        let domain_system = profile.detect.system_text(request.classes.as_deref());
         let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
             .into_iter()
             .collect();
