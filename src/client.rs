@@ -181,7 +181,9 @@ impl Perceptron for PerceptronClient {
         if let Some(system) = profile.and_then(|p| p.ocr.system) {
             system_prompts.push(system.to_string());
         }
-        let user_text = profile.and_then(|p| p.ocr.user_text(&request.mode)).map(|s| s.to_string());
+        let user_text = profile
+            .and_then(|p| p.ocr.user_text(&request.mode))
+            .map(|s| s.to_string());
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,

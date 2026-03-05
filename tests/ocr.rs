@@ -168,7 +168,8 @@ async fn qwen_markdown() {
     )
     .await;
 
-    let request = OcrRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
+    let request =
+        OcrRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("# Hello".to_string()));
 }

@@ -230,8 +230,8 @@ async fn qwen_detailed() {
     )
     .await;
 
-    let request =
-        CaptionRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
+    let request = CaptionRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/img.jpg"))
+        .style(CaptionStyle::Detailed);
     let response = client.caption(request).await.unwrap();
     assert!(response.content.is_some());
 }
