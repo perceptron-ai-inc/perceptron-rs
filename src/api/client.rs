@@ -4,7 +4,8 @@ use reqwest::Client;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 
-use crate::chat_completions::*;
+use super::chat_completions::*;
+use super::models::*;
 use crate::error::{ApiErrorDetail, ApiErrorResponse, PerceptronError};
 
 /// Low-level HTTP client for the Perceptron API.
@@ -26,6 +27,16 @@ impl ApiClient {
         }
     }
 
+    /// List all available models.
+    pub async fn models(&self) -> Result<ModelsResponse, PerceptronError> {
+        self.get("/v1/models?extended=true").await
+    }
+
+    /// Get a single model by ID.
+    pub async fn model(&self, id: &str) -> Result<ModelResponse, PerceptronError> {
+        self.get(&format!("/v1/models/{}?extended=true", id)).await
+    }
+
     /// Send a chat completion request.
     pub async fn chat_completions(
         &self,
@@ -34,9 +45,16 @@ impl ApiClient {
         self.post("/v1/chat/completions", &request).await
     }
 
-    async fn post<T: DeserializeOwned>(&self, path: &str, body: &impl Serialize) -> Result<T, PerceptronError> {
-        let mut req_builder = self.http.post(format!("{}{}", self.base_url, path)).json(body);
+    async fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T, PerceptronError> {
+        self.send(self.http.get(format!("{}{}", self.base_url, path))).await
+    }
 
+    async fn post<T: DeserializeOwned>(&self, path: &str, body: &impl Serialize) -> Result<T, PerceptronError> {
+        self.send(self.http.post(format!("{}{}", self.base_url, path)).json(body))
+            .await
+    }
+
+    async fn send<T: DeserializeOwned>(&self, mut req_builder: reqwest::RequestBuilder) -> Result<T, PerceptronError> {
         if let Some(key) = &self.api_key {
             req_builder = req_builder.bearer_auth(key);
         }

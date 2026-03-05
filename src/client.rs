@@ -1,9 +1,10 @@
 use reqwest::Client;
 
 use crate::api::ApiClient;
-use crate::chat_completions::*;
+use crate::api::chat_completions::*;
 use crate::error::PerceptronError;
 use crate::media::*;
+use crate::models::Model;
 use crate::parsing;
 use crate::prompting;
 use crate::types::*;
@@ -94,6 +95,12 @@ impl PerceptronClient {
 
 /// Trait for analyzing visual media with a Perceptron AI model.
 pub trait Perceptron {
+    /// List all available models.
+    fn models(&self) -> impl Future<Output = Result<Vec<Model>, PerceptronError>> + Send;
+
+    /// Get a single model by ID.
+    fn model(&self, id: &str) -> impl Future<Output = Result<Model, PerceptronError>> + Send;
+
     /// Analyze visual media with a custom prompt.
     fn analyze(
         &self,
@@ -114,6 +121,16 @@ pub trait Perceptron {
 }
 
 impl Perceptron for PerceptronClient {
+    async fn models(&self) -> Result<Vec<Model>, PerceptronError> {
+        let resp = self.api.models().await?;
+        Ok(resp.data.into_iter().map(Model::from).collect())
+    }
+
+    async fn model(&self, id: &str) -> Result<Model, PerceptronError> {
+        let resp = self.api.model(id).await?;
+        Ok(resp.into())
+    }
+
     async fn analyze(&self, request: AnalyzeRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.unwrap_or(OutputFormat::Text);
         let desc = RequestDescriptor {
