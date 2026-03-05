@@ -60,9 +60,7 @@ impl DetectPromptTemplate {
     /// Return the system text, substituting categories if provided.
     pub fn system_text(&self, categories: Option<&[String]>) -> String {
         match categories {
-            Some(cats) if !cats.is_empty() => {
-                self.category_template.replace("{categories}", &cats.join(", "))
-            }
+            Some(cats) if !cats.is_empty() => self.category_template.replace("{categories}", &cats.join(", ")),
             _ => self.general.to_string(),
         }
     }
@@ -186,10 +184,7 @@ static REGISTRY: LazyLock<PromptProfileRegistry> = LazyLock::new(|| PromptProfil
         ("qwen3-vl", "qwen3-vl-235b-a22b-thinking"),
         ("qwen3-vl-235b", "qwen3-vl-235b-a22b-thinking"),
     ],
-    prefixes: vec![
-        ("isaac-", "isaac-default"),
-        ("qwen3-", "qwen3-vl-235b-a22b-thinking"),
-    ],
+    prefixes: vec![("isaac-", "isaac-default"), ("qwen3-", "qwen3-vl-235b-a22b-thinking")],
 });
 
 /// Resolve the prompt profile for a given model name.
@@ -265,7 +260,10 @@ mod tests {
 
         // Qwen: plain → Some, markdown/html → Some
         let qwen = resolve_prompt_profile("qwen");
-        assert_eq!(qwen.ocr.user_text(&OcrMode::Plain), Some("Read all the text in the image."));
+        assert_eq!(
+            qwen.ocr.user_text(&OcrMode::Plain),
+            Some("Read all the text in the image.")
+        );
         assert_eq!(qwen.ocr.user_text(&OcrMode::Markdown), Some("qwenvl markdown"));
         assert_eq!(qwen.ocr.user_text(&OcrMode::Html), Some("qwenvl html"));
     }

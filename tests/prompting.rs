@@ -52,8 +52,8 @@ async fn qwen_caption_detailed() {
     )
     .await;
 
-    let request = CaptionRequest::new(QWEN_MODEL, Media::image_url("https://example.com/img.jpg"))
-        .style(CaptionStyle::Detailed);
+    let request =
+        CaptionRequest::new(QWEN_MODEL, Media::image_url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
     let response = client.caption(request).await.unwrap();
     assert!(response.content.is_some());
 }
