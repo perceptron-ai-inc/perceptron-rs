@@ -127,3 +127,70 @@ async fn with_reasoning() {
     assert_eq!(response.content, Some("Hello".to_string()));
     assert_eq!(response.reasoning, Some("I can see text".to_string()));
 }
+
+#[tokio::test]
+async fn qwen_plain() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": "qwen3-vl-72b",
+            "messages": [
+                {"role": "user", "content": [
+                    {"type": "image_url"},
+                    {"type": "text", "text": "Read all the text in the image."}
+                ]}
+            ]
+        })),
+        common::response("Hello World", None),
+    )
+    .await;
+
+    let request = OcrRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/doc.jpg"));
+    let response = client.ocr(request).await.unwrap();
+    assert_eq!(response.content, Some("Hello World".to_string()));
+}
+
+#[tokio::test]
+async fn qwen_markdown() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "user", "content": [
+                    {"type": "image_url"},
+                    {"type": "text", "text": "qwenvl markdown"}
+                ]}
+            ]
+        })),
+        common::response("# Hello", None),
+    )
+    .await;
+
+    let request = OcrRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
+    let response = client.ocr(request).await.unwrap();
+    assert_eq!(response.content, Some("# Hello".to_string()));
+}
+
+#[tokio::test]
+async fn unknown_model_no_prompts() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": "unknown-model",
+            "messages": [
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response("Hello World", None),
+    )
+    .await;
+
+    let request = OcrRequest::new("unknown-model", Media::image_url("https://example.com/doc.jpg"));
+    let response = client.ocr(request).await.unwrap();
+    assert_eq!(response.content, Some("Hello World".to_string()));
+}

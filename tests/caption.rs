@@ -187,3 +187,74 @@ async fn point_format() {
         })
     );
 }
+
+#[tokio::test]
+async fn qwen_concise() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": "qwen3-vl-72b",
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"},
+                    {"type": "text", "text": "Describe the primary subjects, their actions, and visible context in one vivid sentence."}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = CaptionRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/img.jpg"));
+    let response = client.caption(request).await.unwrap();
+    assert!(response.content.is_some());
+}
+
+#[tokio::test]
+async fn qwen_detailed() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"},
+                    {"type": "text", "text": "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the image."}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request =
+        CaptionRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
+    let response = client.caption(request).await.unwrap();
+    assert!(response.content.is_some());
+}
+
+#[tokio::test]
+async fn unknown_model_no_user_text() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": "unknown-model",
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = CaptionRequest::new("unknown-model", Media::image_url("https://example.com/img.jpg"));
+    let response = client.caption(request).await.unwrap();
+    assert!(response.content.is_some());
+}

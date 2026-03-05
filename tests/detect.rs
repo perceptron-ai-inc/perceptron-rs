@@ -221,3 +221,74 @@ async fn with_reasoning() {
     assert_eq!(response.reasoning, Some("I see a cat in the image".to_string()));
     assert_single_cat_box(&response);
 }
+
+#[tokio::test]
+async fn qwen_general() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": "qwen3-vl-72b",
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "system", "content": "Locate every object of interest and report bounding box coordinates in JSON format."},
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response(single_box_content(), None),
+    )
+    .await;
+
+    let request = DetectRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/img.jpg"));
+    let response = client.detect(request).await.unwrap();
+    assert!(response.content.is_some());
+}
+
+#[tokio::test]
+async fn qwen_with_classes() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "system", "content": "Locate every instance that belongs to the following categories: \"cat, dog\". Report bbox coordinates in JSON format."},
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response(single_box_content(), None),
+    )
+    .await;
+
+    let request = DetectRequest::new("qwen3-vl-72b", Media::image_url("https://example.com/img.jpg"))
+        .classes(vec!["cat".to_string(), "dog".to_string()]);
+    let response = client.detect(request).await.unwrap();
+    assert!(response.content.is_some());
+}
+
+#[tokio::test]
+async fn unknown_model_no_domain_system() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "model": "unknown-model",
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "image_url"}
+                ]}
+            ]
+        })),
+        common::response(single_box_content(), None),
+    )
+    .await;
+
+    let request = DetectRequest::new("unknown-model", Media::image_url("https://example.com/img.jpg"));
+    let response = client.detect(request).await.unwrap();
+    assert!(response.content.is_some());
+}
