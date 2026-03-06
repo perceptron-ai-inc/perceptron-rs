@@ -31,7 +31,7 @@ fn analyze_request_all_fields() {
         .top_k(50)
         .frequency_penalty(0.5)
         .presence_penalty(0.125)
-        .max_completion_tokens(100),
+        .max_tokens(100),
         json!({
             "message": "Describe this",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
@@ -43,7 +43,7 @@ fn analyze_request_all_fields() {
             "top_k": 50,
             "frequency_penalty": 0.5,
             "presence_penalty": 0.125,
-            "max_completion_tokens": 100
+            "max_tokens": 100
         }),
     );
 }
@@ -60,7 +60,7 @@ fn caption_request_all_fields() {
             .top_k(50)
             .frequency_penalty(0.5)
             .presence_penalty(0.125)
-            .max_completion_tokens(100),
+            .max_tokens(100),
         json!({
             "media": {"type": "base64", "format": "jpeg", "data": "data"},
             "style": "detailed",
@@ -72,7 +72,7 @@ fn caption_request_all_fields() {
             "top_k": 50,
             "frequency_penalty": 0.5,
             "presence_penalty": 0.125,
-            "max_completion_tokens": 100
+            "max_tokens": 100
         }),
     );
 }
@@ -88,7 +88,7 @@ fn ocr_request_all_fields() {
             .top_k(50)
             .frequency_penalty(0.5)
             .presence_penalty(0.125)
-            .max_completion_tokens(100),
+            .max_tokens(100),
         json!({
             "media": {"type": "url", "modality": "image", "src": "https://example.com/doc.jpg"},
             "mode": "markdown",
@@ -99,7 +99,7 @@ fn ocr_request_all_fields() {
             "top_k": 50,
             "frequency_penalty": 0.5,
             "presence_penalty": 0.125,
-            "max_completion_tokens": 100
+            "max_tokens": 100
         }),
     );
 }
@@ -115,7 +115,7 @@ fn detect_request_all_fields() {
             .top_k(50)
             .frequency_penalty(0.5)
             .presence_penalty(0.125)
-            .max_completion_tokens(100),
+            .max_tokens(100),
         json!({
             "media": {"type": "url", "modality": "video", "src": "https://example.com/vid.mp4"},
             "classes": ["cat", "dog"],
@@ -126,7 +126,7 @@ fn detect_request_all_fields() {
             "top_k": 50,
             "frequency_penalty": 0.5,
             "presence_penalty": 0.125,
-            "max_completion_tokens": 100
+            "max_tokens": 100
         }),
     );
 }
