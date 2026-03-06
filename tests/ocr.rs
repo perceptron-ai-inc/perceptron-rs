@@ -165,8 +165,8 @@ async fn custom_prompt() {
     )
     .await;
 
-    let request = OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg"))
-        .prompt("Extract only the dates");
+    let request =
+        OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).prompt("Extract only the dates");
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("2024-01-15".to_string()));
 }
