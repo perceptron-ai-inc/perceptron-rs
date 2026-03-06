@@ -84,7 +84,7 @@ macro_rules! generation_param_setters {
             self
         }
 
-        /// Set maximum completion tokens.
+        /// Set maximum tokens.
         pub fn max_tokens(mut self, max_tokens: u32) -> Self {
             self.max_tokens = Some(max_tokens);
             self
@@ -225,6 +225,9 @@ pub struct OcrRequest {
     pub media: Media,
     /// OCR output mode.
     pub mode: OcrMode,
+    /// Custom prompt to override the default OCR instruction.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt: Option<String>,
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
@@ -249,6 +252,7 @@ impl OcrRequest {
         Self {
             media,
             mode: OcrMode::default(),
+            prompt: None,
             model: model.into(),
             reasoning: None,
             temperature: None,
@@ -263,6 +267,12 @@ impl OcrRequest {
     /// Set the OCR output mode.
     pub fn mode(mut self, mode: OcrMode) -> Self {
         self.mode = mode;
+        self
+    }
+
+    /// Set a custom prompt to override the default OCR instruction.
+    pub fn prompt(mut self, prompt: impl Into<String>) -> Self {
+        self.prompt = Some(prompt.into());
         self
     }
 
