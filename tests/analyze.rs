@@ -323,33 +323,6 @@ async fn base64_media() {
 }
 
 #[tokio::test]
-async fn video_url_media() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({
-            "messages": [{
-                "role": "user",
-                "content": [
-                    {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}}
-                ]
-            }]
-        })),
-        common::response("a video of a cat", None),
-    )
-    .await;
-
-    let request = AnalyzeRequest::new(
-        "test-model",
-        "Describe this",
-        Media::video_url("https://example.com/vid.mp4"),
-    );
-    let response = client.analyze(request).await.unwrap();
-
-    assert_eq!(response.content, Some("a video of a cat".to_string()));
-}
-
-#[tokio::test]
 async fn all_generation_params() {
     let (server, client) = common::setup().await;
     common::mock_response(

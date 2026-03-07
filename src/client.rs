@@ -3,7 +3,7 @@ use reqwest::Client;
 use crate::api::ApiClient;
 use crate::api::chat_completions::*;
 use crate::error::PerceptronError;
-use crate::media::*;
+use crate::media::Media;
 use crate::models::Model;
 use crate::parsing;
 use crate::prompting;
@@ -297,14 +297,9 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
     }
 
     let media_url = desc.media.to_url();
-    let media_part = match desc.media.modality() {
-        Modality::Image => ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
-            image_url: ImageUrl { url: media_url },
-        }),
-        Modality::Video => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
-            video_url: VideoUrl { url: media_url },
-        }),
-    };
+    let media_part = ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
+        image_url: ImageUrl { url: media_url },
+    });
     let mut user_parts = vec![media_part];
 
     if let Some(text) = desc.user_text {

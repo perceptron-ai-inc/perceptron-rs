@@ -8,8 +8,6 @@ use serde::{Deserialize, Serialize};
 pub enum Modality {
     /// Image media.
     Image,
-    /// Video media.
-    Video,
 }
 
 /// Media encoding format.
@@ -24,10 +22,6 @@ pub enum MediaFormat {
     Jpeg,
     /// WebP image.
     Webp,
-    /// MP4 video.
-    Mp4,
-    /// WebM video.
-    Webm,
 }
 
 impl MediaFormat {
@@ -35,11 +29,10 @@ impl MediaFormat {
     pub fn modality(&self) -> &Modality {
         match self {
             MediaFormat::Png | MediaFormat::Jpeg | MediaFormat::Webp => &Modality::Image,
-            MediaFormat::Mp4 | MediaFormat::Webm => &Modality::Video,
         }
     }
 
-    /// Returns the MIME type string (e.g. `"image/png"`, `"video/mp4"`).
+    /// Returns the MIME type string (e.g. `"image/png"`).
     pub fn mime(&self) -> String {
         format!("{}/{}", self.modality(), self)
     }
@@ -71,14 +64,6 @@ impl Media {
     pub fn image_url(url: impl Into<String>) -> Self {
         Media::Url {
             modality: Modality::Image,
-            src: url.into(),
-        }
-    }
-
-    /// Create from a video URL.
-    pub fn video_url(url: impl Into<String>) -> Self {
-        Media::Url {
-            modality: Modality::Video,
             src: url.into(),
         }
     }
@@ -122,8 +107,6 @@ mod tests {
         assert!(matches!(MediaFormat::Png.modality(), Modality::Image));
         assert!(matches!(MediaFormat::Jpeg.modality(), Modality::Image));
         assert!(matches!(MediaFormat::Webp.modality(), Modality::Image));
-        assert!(matches!(MediaFormat::Mp4.modality(), Modality::Video));
-        assert!(matches!(MediaFormat::Webm.modality(), Modality::Video));
     }
 
     #[test]
@@ -131,8 +114,6 @@ mod tests {
         assert_eq!(MediaFormat::Png.mime(), "image/png");
         assert_eq!(MediaFormat::Jpeg.mime(), "image/jpeg");
         assert_eq!(MediaFormat::Webp.mime(), "image/webp");
-        assert_eq!(MediaFormat::Mp4.mime(), "video/mp4");
-        assert_eq!(MediaFormat::Webm.mime(), "video/webm");
     }
 
     #[test]
@@ -143,23 +124,9 @@ mod tests {
     }
 
     #[test]
-    fn media_video_url() {
-        let media = Media::video_url("https://example.com/vid.mp4");
-        assert!(matches!(media.modality(), Modality::Video));
-        assert_eq!(media.to_url(), "https://example.com/vid.mp4");
-    }
-
-    #[test]
     fn media_base64_image() {
         let media = Media::base64(MediaFormat::Png, "abc123");
         assert!(matches!(media.modality(), Modality::Image));
         assert_eq!(media.to_url(), "data:image/png;base64,abc123");
-    }
-
-    #[test]
-    fn media_base64_video() {
-        let media = Media::base64(MediaFormat::Mp4, "xyz789");
-        assert!(matches!(media.modality(), Modality::Video));
-        assert_eq!(media.to_url(), "data:video/mp4;base64,xyz789");
     }
 }
