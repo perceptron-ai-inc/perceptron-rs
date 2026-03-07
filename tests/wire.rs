@@ -107,7 +107,7 @@ fn ocr_request_all_fields() {
 #[test]
 fn detect_request_all_fields() {
     roundtrip(
-        &DetectRequest::new("model-v1", Media::video_url("https://example.com/vid.mp4"))
+        &DetectRequest::new("model-v1", Media::image_url("https://example.com/img.jpg"))
             .classes(vec!["cat".to_string(), "dog".to_string()])
             .reasoning(true)
             .temperature(0.5)
@@ -117,7 +117,7 @@ fn detect_request_all_fields() {
             .presence_penalty(0.125)
             .max_tokens(100),
         json!({
-            "media": {"type": "url", "modality": "video", "src": "https://example.com/vid.mp4"},
+            "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
             "classes": ["cat", "dog"],
             "model": "model-v1",
             "reasoning": true,
@@ -171,7 +171,7 @@ fn model_all_fields() {
         &Model {
             id: "isaac-0.1".to_string(),
             name: "Isaac".to_string(),
-            modalities: vec![Modality::Image, Modality::Video],
+            modalities: vec![Modality::Image],
             output_formats: vec![
                 OutputFormat::Text,
                 OutputFormat::Point,
@@ -185,7 +185,7 @@ fn model_all_fields() {
         json!({
             "id": "isaac-0.1",
             "name": "Isaac",
-            "modalities": ["image", "video"],
+            "modalities": ["image"],
             "output_formats": ["text", "point", "box", "polygon"],
             "sampling_parameters": ["temperature", "top_p"],
             "max_context_tokens": 128000,

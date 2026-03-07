@@ -9,7 +9,7 @@ fn sample_model(id: &str, name: &str) -> serde_json::Value {
     json!({
         "id": id,
         "name": name,
-        "modalities": ["image", "video"],
+        "modalities": ["image"],
         "output_formats": ["text", "point", "box", "polygon"],
         "sampling_parameters": ["temperature", "top_p", "top_k", "frequency_penalty", "presence_penalty"],
         "max_context_tokens": 128000,
@@ -20,7 +20,7 @@ fn sample_model(id: &str, name: &str) -> serde_json::Value {
 fn assert_model(model: &Model, expected_id: &str, expected_name: &str) {
     assert_eq!(model.id, expected_id);
     assert_eq!(model.name, expected_name);
-    assert_eq!(model.modalities, vec![Modality::Image, Modality::Video]);
+    assert_eq!(model.modalities, vec![Modality::Image]);
     assert_eq!(
         model.output_formats,
         vec![
