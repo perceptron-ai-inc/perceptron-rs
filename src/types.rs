@@ -92,6 +92,64 @@ macro_rules! generation_param_setters {
     };
 }
 
+/// Parameters for a visual question answering request.
+///
+/// Use [`QuestionRequest::new`] to create a request with required fields,
+/// then chain optional setters using the builder pattern.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+pub struct QuestionRequest {
+    /// The question to ask about the media.
+    pub question: String,
+    /// Media to ask about.
+    pub media: Media,
+    /// Output format for the response.
+    pub output_format: Option<OutputFormat>,
+    /// Model to use for the request.
+    pub model: String,
+    /// Whether to enable chain-of-thought reasoning.
+    pub reasoning: Option<bool>,
+    /// Sampling temperature.
+    pub temperature: Option<f32>,
+    /// Nucleus sampling probability.
+    pub top_p: Option<f32>,
+    /// Top-k sampling value.
+    pub top_k: Option<u32>,
+    /// Frequency penalty.
+    pub frequency_penalty: Option<f32>,
+    /// Presence penalty.
+    pub presence_penalty: Option<f32>,
+    /// Maximum number of tokens to generate.
+    pub max_tokens: Option<u32>,
+}
+
+impl QuestionRequest {
+    /// Create a new question request with required fields.
+    pub fn new(model: impl Into<String>, question: impl Into<String>, media: Media) -> Self {
+        Self {
+            question: question.into(),
+            media,
+            output_format: None,
+            model: model.into(),
+            reasoning: None,
+            temperature: None,
+            top_p: None,
+            top_k: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            max_tokens: None,
+        }
+    }
+
+    /// Set the output format.
+    pub fn output_format(mut self, format: OutputFormat) -> Self {
+        self.output_format = Some(format);
+        self
+    }
+
+    generation_param_setters!();
+}
+
 /// Parameters for a media analysis request.
 ///
 /// Use [`AnalyzeRequest::new`] to create a request with required fields,

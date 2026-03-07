@@ -101,6 +101,12 @@ pub trait Perceptron {
     /// Get a single model by ID.
     fn model(&self, id: &str) -> impl Future<Output = Result<Model, PerceptronError>> + Send;
 
+    /// Ask a question about visual media.
+    fn question(
+        &self,
+        request: QuestionRequest,
+    ) -> impl Future<Output = Result<PointingResponse, PerceptronError>> + Send;
+
     /// Analyze visual media with a custom prompt.
     fn analyze(
         &self,
@@ -129,6 +135,30 @@ impl Perceptron for PerceptronClient {
     async fn model(&self, id: &str) -> Result<Model, PerceptronError> {
         let resp = self.api.model(id).await?;
         Ok(resp.into())
+    }
+
+    async fn question(&self, request: QuestionRequest) -> Result<PointingResponse, PerceptronError> {
+        let output_format = request.output_format.unwrap_or(OutputFormat::Text);
+        let profile = prompting::resolve_prompt_profile(&request.model);
+        let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
+            .into_iter()
+            .collect();
+        if let Some(system) = profile.question.system(&output_format) {
+            system_prompts.push(system.to_string());
+        }
+        let desc = RequestDescriptor {
+            media: request.media,
+            system_prompts,
+            user_text: Some(request.question),
+            model: request.model,
+            max_tokens: request.max_tokens,
+            temperature: request.temperature,
+            top_p: request.top_p,
+            top_k: request.top_k,
+            frequency_penalty: request.frequency_penalty,
+            presence_penalty: request.presence_penalty,
+        };
+        self.send_and_extract(build_wire_request(desc), &output_format).await
     }
 
     async fn analyze(&self, request: AnalyzeRequest) -> Result<PointingResponse, PerceptronError> {
