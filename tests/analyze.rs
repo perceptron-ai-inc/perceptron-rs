@@ -375,7 +375,7 @@ async fn all_generation_params() {
         .top_k(50)
         .frequency_penalty(0.5)
         .presence_penalty(0.3)
-        .max_completion_tokens(100);
+        .max_tokens(100);
     let response = client.analyze(request).await.unwrap();
 
     assert!(response.content.is_some());

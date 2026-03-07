@@ -146,3 +146,27 @@ async fn with_reasoning() {
     assert_eq!(response.content, Some("Hello".to_string()));
     assert_eq!(response.reasoning, Some("I can see text".to_string()));
 }
+
+#[tokio::test]
+async fn custom_prompt() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "system"},
+                {"role": "user", "content": [
+                    {"type": "image_url"},
+                    {"type": "text", "text": "Extract only the dates"}
+                ]}
+            ]
+        })),
+        common::response("2024-01-15", None),
+    )
+    .await;
+
+    let request =
+        OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).prompt("Extract only the dates");
+    let response = client.ocr(request).await.unwrap();
+    assert_eq!(response.content, Some("2024-01-15".to_string()));
+}

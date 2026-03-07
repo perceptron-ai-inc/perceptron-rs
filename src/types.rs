@@ -84,9 +84,9 @@ macro_rules! generation_param_setters {
             self
         }
 
-        /// Set maximum completion tokens.
-        pub fn max_completion_tokens(mut self, max_tokens: u32) -> Self {
-            self.max_completion_tokens = Some(max_tokens);
+        /// Set maximum tokens.
+        pub fn max_tokens(mut self, max_tokens: u32) -> Self {
+            self.max_tokens = Some(max_tokens);
             self
         }
     };
@@ -120,7 +120,7 @@ pub struct AnalyzeRequest {
     /// Presence penalty.
     pub presence_penalty: Option<f32>,
     /// Maximum number of tokens to generate.
-    pub max_completion_tokens: Option<u32>,
+    pub max_tokens: Option<u32>,
 }
 
 impl AnalyzeRequest {
@@ -137,7 +137,7 @@ impl AnalyzeRequest {
             top_k: None,
             frequency_penalty: None,
             presence_penalty: None,
-            max_completion_tokens: None,
+            max_tokens: None,
         }
     }
 
@@ -178,7 +178,7 @@ pub struct CaptionRequest {
     /// Presence penalty.
     pub presence_penalty: Option<f32>,
     /// Maximum number of tokens to generate.
-    pub max_completion_tokens: Option<u32>,
+    pub max_tokens: Option<u32>,
 }
 
 impl CaptionRequest {
@@ -195,7 +195,7 @@ impl CaptionRequest {
             top_k: None,
             frequency_penalty: None,
             presence_penalty: None,
-            max_completion_tokens: None,
+            max_tokens: None,
         }
     }
 
@@ -225,6 +225,9 @@ pub struct OcrRequest {
     pub media: Media,
     /// OCR output mode.
     pub mode: OcrMode,
+    /// Custom prompt to override the default OCR instruction.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt: Option<String>,
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
@@ -240,7 +243,7 @@ pub struct OcrRequest {
     /// Presence penalty.
     pub presence_penalty: Option<f32>,
     /// Maximum number of tokens to generate.
-    pub max_completion_tokens: Option<u32>,
+    pub max_tokens: Option<u32>,
 }
 
 impl OcrRequest {
@@ -249,6 +252,7 @@ impl OcrRequest {
         Self {
             media,
             mode: OcrMode::default(),
+            prompt: None,
             model: model.into(),
             reasoning: None,
             temperature: None,
@@ -256,13 +260,19 @@ impl OcrRequest {
             top_k: None,
             frequency_penalty: None,
             presence_penalty: None,
-            max_completion_tokens: None,
+            max_tokens: None,
         }
     }
 
     /// Set the OCR output mode.
     pub fn mode(mut self, mode: OcrMode) -> Self {
         self.mode = mode;
+        self
+    }
+
+    /// Set a custom prompt to override the default OCR instruction.
+    pub fn prompt(mut self, prompt: impl Into<String>) -> Self {
+        self.prompt = Some(prompt.into());
         self
     }
 
@@ -295,7 +305,7 @@ pub struct DetectRequest {
     /// Presence penalty.
     pub presence_penalty: Option<f32>,
     /// Maximum number of tokens to generate.
-    pub max_completion_tokens: Option<u32>,
+    pub max_tokens: Option<u32>,
 }
 
 impl DetectRequest {
@@ -311,7 +321,7 @@ impl DetectRequest {
             top_k: None,
             frequency_penalty: None,
             presence_penalty: None,
-            max_completion_tokens: None,
+            max_tokens: None,
         }
     }
 
