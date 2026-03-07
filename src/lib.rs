@@ -15,9 +15,10 @@ pub use media::{Media, MediaFormat, Modality};
 pub use models::{Model, SamplingParameter};
 pub use pointing::{BoundingBox, Point, Pointing, Polygon};
 pub use prompting::{
-    CaptionPromptTemplate, DetectPromptTemplate, OcrPromptTemplate, PromptProfile, resolve_prompt_profile,
+    CaptionPromptTemplate, DetectPromptTemplate, OcrPromptTemplate, PromptProfile, QuestionPromptTemplate,
+    resolve_prompt_profile,
 };
 pub use types::{
     AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, OcrMode, OcrRequest, OutputFormat, PointingResponse,
-    TextResponse,
+    QuestionRequest, TextResponse,
 };

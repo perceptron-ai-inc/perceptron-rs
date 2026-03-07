@@ -1,4 +1,23 @@
-use crate::types::{CaptionStyle, OcrMode};
+use crate::types::{CaptionStyle, OcrMode, OutputFormat};
+
+/// Prompt template for question requests.
+#[derive(Debug, Clone, PartialEq)]
+pub struct QuestionPromptTemplate {
+    /// System instruction for open-ended (text) questions.
+    pub open_instruction: Option<&'static str>,
+    /// System instruction for grounded (spatial) questions.
+    pub grounded_instruction: Option<&'static str>,
+}
+
+impl QuestionPromptTemplate {
+    /// Return the system instruction for the given output format.
+    pub fn system(&self, output_format: &OutputFormat) -> Option<&'static str> {
+        match output_format {
+            OutputFormat::Text => self.open_instruction,
+            _ => self.grounded_instruction,
+        }
+    }
+}
 
 /// Prompt template for caption requests.
 #[derive(Debug, Clone, PartialEq)]
@@ -67,6 +86,8 @@ impl DetectPromptTemplate {
 /// A collection of prompt templates for a specific model family.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PromptProfile {
+    /// Question prompt template.
+    pub question: QuestionPromptTemplate,
     /// Caption prompt template.
     pub caption: CaptionPromptTemplate,
     /// OCR prompt template.
@@ -80,6 +101,10 @@ pub struct PromptProfile {
 // ---------------------------------------------------------------------------
 
 const ISAAC: PromptProfile = PromptProfile {
+    question: QuestionPromptTemplate {
+        open_instruction: None,
+        grounded_instruction: None,
+    },
     caption: CaptionPromptTemplate {
         system: None,
         concise: "Provide a concise, human-friendly caption for the upcoming image.",
@@ -101,6 +126,12 @@ const ISAAC: PromptProfile = PromptProfile {
 };
 
 const QWEN: PromptProfile = PromptProfile {
+    question: QuestionPromptTemplate {
+        open_instruction: None,
+        grounded_instruction: Some(
+            "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format.",
+        ),
+    },
     caption: CaptionPromptTemplate {
         system: None,
         concise: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",

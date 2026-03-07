@@ -1,6 +1,6 @@
 use perceptron_ai::{
     AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Media, MediaFormat, Modality, Model, OcrMode,
-    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, SamplingParameter, TextResponse,
+    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, SamplingParameter, TextResponse,
 };
 use serde_json::json;
 
@@ -119,6 +119,38 @@ fn detect_request_all_fields() {
         json!({
             "media": {"type": "url", "modality": "video", "src": "https://example.com/vid.mp4"},
             "classes": ["cat", "dog"],
+            "model": "model-v1",
+            "reasoning": true,
+            "temperature": 0.5,
+            "top_p": 0.25,
+            "top_k": 50,
+            "frequency_penalty": 0.5,
+            "presence_penalty": 0.125,
+            "max_tokens": 100
+        }),
+    );
+}
+
+#[test]
+fn question_request_all_fields() {
+    roundtrip(
+        &QuestionRequest::new(
+            "model-v1",
+            "What is this?",
+            Media::image_url("https://example.com/img.jpg"),
+        )
+        .output_format(OutputFormat::Point)
+        .reasoning(true)
+        .temperature(0.5)
+        .top_p(0.25)
+        .top_k(50)
+        .frequency_penalty(0.5)
+        .presence_penalty(0.125)
+        .max_tokens(100),
+        json!({
+            "question": "What is this?",
+            "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
+            "output_format": "point",
             "model": "model-v1",
             "reasoning": true,
             "temperature": 0.5,
