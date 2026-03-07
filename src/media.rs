@@ -129,5 +129,4 @@ mod tests {
         assert!(matches!(media.modality(), Modality::Image));
         assert_eq!(media.to_url(), "data:image/png;base64,abc123");
     }
-
 }
