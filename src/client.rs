@@ -181,7 +181,7 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn caption(&self, request: CaptionRequest) -> Result<PointingResponse, PerceptronError> {
-        let output_format = request.output_format.unwrap_or(OutputFormat::Text);
+        let output_format = request.output_format.unwrap_or(OutputFormat::Box);
         let profile = prompting::resolve_prompt_profile(&request.model);
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()
@@ -230,9 +230,8 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn detect(&self, request: DetectRequest) -> Result<PointingResponse, PerceptronError> {
-        let output_format = request.output_format.unwrap_or(OutputFormat::Text);
         let profile = prompting::resolve_prompt_profile(&request.model);
-        let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
+        let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
             .into_iter()
             .collect();
         system_prompts.push(profile.detect.system_text(request.classes.as_deref()));
@@ -248,7 +247,7 @@ impl Perceptron for PerceptronClient {
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
         };
-        self.send_and_extract(build_wire_request(desc), &output_format)
+        self.send_and_extract(build_wire_request(desc), &OutputFormat::Box)
             .await
     }
 }

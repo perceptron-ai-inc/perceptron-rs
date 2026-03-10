@@ -219,7 +219,7 @@ pub struct CaptionRequest {
     pub media: Media,
     /// Caption style.
     pub style: CaptionStyle,
-    /// Output format for the response (defaults to Text).
+    /// Output format for the response (defaults to Box).
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
@@ -348,8 +348,6 @@ pub struct DetectRequest {
     pub media: Media,
     /// Optional list of object categories to detect.
     pub classes: Option<Vec<String>>,
-    /// Output format for the response (defaults to Text).
-    pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
@@ -374,7 +372,6 @@ impl DetectRequest {
         Self {
             media,
             classes: None,
-            output_format: None,
             model: model.into(),
             reasoning: None,
             temperature: None,
@@ -389,12 +386,6 @@ impl DetectRequest {
     /// Set the object categories to detect.
     pub fn classes(mut self, classes: Vec<String>) -> Self {
         self.classes = Some(classes);
-        self
-    }
-
-    /// Set the output format.
-    pub fn output_format(mut self, format: OutputFormat) -> Self {
-        self.output_format = Some(format);
         self
     }
 
