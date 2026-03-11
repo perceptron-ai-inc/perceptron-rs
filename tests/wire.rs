@@ -171,6 +171,7 @@ fn model_all_fields() {
         &Model {
             id: "isaac-0.1".to_string(),
             name: "Isaac".to_string(),
+            description: Some("A vision model".to_string()),
             modalities: vec![Modality::Image],
             output_formats: vec![
                 OutputFormat::Text,
@@ -185,6 +186,7 @@ fn model_all_fields() {
         json!({
             "id": "isaac-0.1",
             "name": "Isaac",
+            "description": "A vision model",
             "modalities": ["image"],
             "output_formats": ["text", "point", "box", "polygon"],
             "sampling_parameters": ["temperature", "top_p"],

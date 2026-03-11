@@ -11,6 +11,8 @@ pub struct Model {
     pub id: String,
     /// Human-readable model name.
     pub name: String,
+    /// Description of the model.
+    pub description: Option<String>,
     /// Input modalities the model accepts.
     pub modalities: Vec<Modality>,
     /// Output formats the model supports.

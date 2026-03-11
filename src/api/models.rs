@@ -13,6 +13,7 @@ pub struct ModelsResponse {
 pub struct ModelResponse {
     pub id: String,
     pub name: String,
+    pub description: Option<String>,
     pub modalities: Vec<Modality>,
     pub output_formats: Vec<OutputFormat>,
     pub sampling_parameters: Vec<SamplingParameter>,
@@ -25,6 +26,7 @@ impl From<ModelResponse> for Model {
         Self {
             id: response.id,
             name: response.name,
+            description: response.description,
             modalities: response.modalities,
             output_formats: response.output_formats,
             sampling_parameters: response.sampling_parameters,
