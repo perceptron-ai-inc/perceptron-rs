@@ -46,6 +46,9 @@ impl MediaFormat {
 }
 
 /// Media for a request — either a URL or base64-encoded data.
+///
+/// The SDK does not validate that the media's modality matches the target model's
+/// supported modalities; mismatches surface as a server-side error.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
