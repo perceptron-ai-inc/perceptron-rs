@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+env:
+  RUST_STABLE: 1.95.0
+  RUST_NIGHTLY: nightly-2026-04-30
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -22,13 +26,13 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.88.0
+          toolchain: ${{ env.RUST_STABLE }}
           components: rustfmt
 
       - name: Install nightly rust for udeps
         uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly-2026-04-01
+          toolchain: ${{ env.RUST_NIGHTLY }}
 
       - name: Get cache keys
         id: cache-keys
@@ -71,16 +75,16 @@ jobs:
           key: cargo-build-${{ runner.os }}-${{ steps.cache-keys.outputs.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Format check
-        run: cargo +1.88.0 fmt --check
+        run: cargo +${{ env.RUST_STABLE }} fmt --check
 
       - name: Compile check
         env:
           RUSTFLAGS: "-D warnings"
-        run: cargo +1.88.0 check --all-targets
+        run: cargo +${{ env.RUST_STABLE }} check --all-targets --locked
 
       - name: Check Cargo.toml dependencies are sorted
         run: |
-          if ! cargo +1.88.0 sort --check; then
+          if ! cargo +${{ env.RUST_STABLE }} sort --check; then
             echo "Cargo.toml dependencies are not sorted!"
             echo "Please run: cargo install cargo-sort && cargo sort"
             exit 1
@@ -89,13 +93,13 @@ jobs:
 
       - name: Check for unused dependencies
         run: |
-          if ! cargo +nightly-2026-04-01 udeps --all-targets; then
+          if ! cargo +${{ env.RUST_NIGHTLY }} udeps --all-targets --locked; then
             echo "Found unused dependencies!"
-            echo "Please run: cargo install cargo-udeps && cargo +nightly-2026-04-01 udeps --all-targets"
+            echo "Please run: cargo install cargo-udeps && cargo +${{ env.RUST_NIGHTLY }} udeps --all-targets"
             echo "Remove any unused dependencies from Cargo.toml"
             exit 1
           fi
           echo "No unused dependencies found"
 
       - name: Test
-        run: cargo +1.88.0 test --all-targets
+        run: cargo +${{ env.RUST_STABLE }} test --all-targets --locked
