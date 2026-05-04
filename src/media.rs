@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// The modality of media being processed.
-#[derive(Debug, Clone, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -13,7 +13,7 @@ pub enum Modality {
 }
 
 /// Media encoding format.
-#[derive(Debug, Clone, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -32,10 +32,10 @@ pub enum MediaFormat {
 
 impl MediaFormat {
     /// Returns the [`Modality`] for this format.
-    pub fn modality(&self) -> &Modality {
+    pub fn modality(&self) -> Modality {
         match self {
-            MediaFormat::Png | MediaFormat::Jpeg | MediaFormat::Webp => &Modality::Image,
-            MediaFormat::Mp4 | MediaFormat::Webm => &Modality::Video,
+            MediaFormat::Png | MediaFormat::Jpeg | MediaFormat::Webp => Modality::Image,
+            MediaFormat::Mp4 | MediaFormat::Webm => Modality::Video,
         }
     }
 
@@ -92,9 +92,9 @@ impl Media {
     }
 
     /// Returns the [`Modality`] for this media.
-    pub fn modality(&self) -> &Modality {
+    pub fn modality(&self) -> Modality {
         match self {
-            Media::Url { modality, .. } => modality,
+            Media::Url { modality, .. } => *modality,
             Media::Base64 { format, .. } => format.modality(),
         }
     }

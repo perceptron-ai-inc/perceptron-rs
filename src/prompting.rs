@@ -5,14 +5,14 @@ use crate::types::{CaptionStyle, OcrMode, OutputFormat};
 #[derive(Debug, Clone, PartialEq)]
 pub struct ModalityPrompt {
     /// Text used when the request media is an image.
-    pub image: &'static str,
+    image: &'static str,
     /// Text used when the request media is a video.
-    pub video: &'static str,
+    video: &'static str,
 }
 
 impl ModalityPrompt {
     /// Return the prompt text for the given modality.
-    pub fn get(&self, modality: &Modality) -> &'static str {
+    pub fn get(&self, modality: Modality) -> &'static str {
         match modality {
             Modality::Image => self.image,
             Modality::Video => self.video,
@@ -24,14 +24,14 @@ impl ModalityPrompt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct QuestionPromptTemplate {
     /// System instruction for open-ended (text) questions.
-    pub open_instruction: Option<ModalityPrompt>,
+    open_instruction: Option<ModalityPrompt>,
     /// System instruction for grounded (spatial) questions.
-    pub grounded_instruction: Option<ModalityPrompt>,
+    grounded_instruction: Option<ModalityPrompt>,
 }
 
 impl QuestionPromptTemplate {
-    /// Return the system instruction for the given output format and modality.
-    pub fn system(&self, output_format: &OutputFormat, modality: &Modality) -> Option<&'static str> {
+    /// Resolve the system instruction for the given output format and modality.
+    pub fn resolve_system(&self, output_format: &OutputFormat, modality: Modality) -> Option<&'static str> {
         let prompt = match output_format {
             OutputFormat::Text => self.open_instruction.as_ref(),
             _ => self.grounded_instruction.as_ref(),
@@ -44,21 +44,21 @@ impl QuestionPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CaptionPromptTemplate {
     /// Optional system instruction for the caption endpoint.
-    pub system: Option<ModalityPrompt>,
+    system: Option<ModalityPrompt>,
     /// User text for concise captions.
-    pub concise: ModalityPrompt,
+    concise: ModalityPrompt,
     /// User text for detailed captions.
-    pub detailed: ModalityPrompt,
+    detailed: ModalityPrompt,
 }
 
 impl CaptionPromptTemplate {
-    /// Return the system instruction for the given modality.
-    pub fn system(&self, modality: &Modality) -> Option<&'static str> {
+    /// Resolve the system instruction for the given modality, if any.
+    pub fn resolve_system(&self, modality: Modality) -> Option<&'static str> {
         self.system.as_ref().map(|p| p.get(modality))
     }
 
-    /// Return the user text for the given caption style and modality.
-    pub fn user_text(&self, style: &CaptionStyle, modality: &Modality) -> &'static str {
+    /// Resolve the user text for the given caption style and modality.
+    pub fn resolve_user(&self, style: &CaptionStyle, modality: Modality) -> &'static str {
         match style {
             CaptionStyle::Concise => self.concise.get(modality),
             CaptionStyle::Detailed => self.detailed.get(modality),
@@ -70,23 +70,23 @@ impl CaptionPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct OcrPromptTemplate {
     /// Optional system instruction for the OCR endpoint.
-    pub system: Option<ModalityPrompt>,
+    system: Option<ModalityPrompt>,
     /// User text for plain mode (None means no user text).
-    pub plain: Option<ModalityPrompt>,
+    plain: Option<ModalityPrompt>,
     /// User text for markdown mode.
-    pub markdown: ModalityPrompt,
+    markdown: ModalityPrompt,
     /// User text for HTML mode.
-    pub html: ModalityPrompt,
+    html: ModalityPrompt,
 }
 
 impl OcrPromptTemplate {
-    /// Return the system instruction for the given modality.
-    pub fn system(&self, modality: &Modality) -> Option<&'static str> {
+    /// Resolve the system instruction for the given modality, if any.
+    pub fn resolve_system(&self, modality: Modality) -> Option<&'static str> {
         self.system.as_ref().map(|p| p.get(modality))
     }
 
-    /// Return the user text for the given OCR mode and modality, or `None` for plain when the profile omits it.
-    pub fn user_text(&self, mode: &OcrMode, modality: &Modality) -> Option<&'static str> {
+    /// Resolve the user text for the given OCR mode and modality, or `None` for plain when omitted.
+    pub fn resolve_user(&self, mode: &OcrMode, modality: Modality) -> Option<&'static str> {
         match mode {
             OcrMode::Plain => self.plain.as_ref().map(|p| p.get(modality)),
             OcrMode::Markdown => Some(self.markdown.get(modality)),
@@ -99,14 +99,14 @@ impl OcrPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DetectPromptTemplate {
     /// System text when no categories are specified.
-    pub general: ModalityPrompt,
+    general: ModalityPrompt,
     /// Template with `{categories}` placeholder for category-specific detection.
-    pub category_template: ModalityPrompt,
+    category_template: ModalityPrompt,
 }
 
 impl DetectPromptTemplate {
-    /// Return the system text for the given modality, substituting categories if provided.
-    pub fn system_text(&self, categories: Option<&[String]>, modality: &Modality) -> String {
+    /// Resolve the system text for the given categories and modality, substituting `{categories}` if provided.
+    pub fn resolve_system(&self, categories: Option<&[String]>, modality: Modality) -> String {
         match categories {
             Some(cats) if !cats.is_empty() => self
                 .category_template
@@ -116,6 +116,7 @@ impl DetectPromptTemplate {
         }
     }
 }
+
 
 /// A collection of prompt templates for a specific model family.
 #[derive(Debug, Clone, PartialEq)]
