@@ -189,7 +189,12 @@ impl Perceptron for PerceptronClient {
         if let Some(system) = profile.caption.system(request.media.modality()) {
             system_prompts.push(system.to_string());
         }
-        let user_text = Some(profile.caption.user_text(&request.style, request.media.modality()).to_string());
+        let user_text = Some(
+            profile
+                .caption
+                .user_text(&request.style, request.media.modality())
+                .to_string(),
+        );
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -211,9 +216,12 @@ impl Perceptron for PerceptronClient {
         if let Some(system) = profile.ocr.system(request.media.modality()) {
             system_prompts.push(system.to_string());
         }
-        let user_text = request
-            .prompt
-            .or_else(|| profile.ocr.user_text(&request.mode, request.media.modality()).map(|s| s.to_string()));
+        let user_text = request.prompt.or_else(|| {
+            profile
+                .ocr
+                .user_text(&request.mode, request.media.modality())
+                .map(|s| s.to_string())
+        });
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -234,7 +242,11 @@ impl Perceptron for PerceptronClient {
         let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
             .into_iter()
             .collect();
-        system_prompts.push(profile.detect.system_text(request.classes.as_deref(), request.media.modality()));
+        system_prompts.push(
+            profile
+                .detect
+                .system_text(request.classes.as_deref(), request.media.modality()),
+        );
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,

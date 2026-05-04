@@ -122,7 +122,8 @@ async fn video_modality_substitutes_prompt() {
     )
     .await;
 
-    let request = OcrRequest::new("isaac-test", Media::video_url("https://example.com/vid.mp4")).mode(OcrMode::Markdown);
+    let request =
+        OcrRequest::new("isaac-test", Media::video_url("https://example.com/vid.mp4")).mode(OcrMode::Markdown);
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("Hello World".to_string()));
 }
