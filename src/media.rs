@@ -87,6 +87,9 @@ impl Media {
     }
 
     /// Create from base64-encoded data.
+    ///
+    /// For videos, prefer [`Self::video_url`] when the source exceeds ~20MB; large
+    /// base64 payloads can hit request-size limits and slow uploads.
     pub fn base64(format: MediaFormat, data: impl Into<String>) -> Self {
         Media::Base64 {
             format,
