@@ -143,7 +143,10 @@ impl Perceptron for PerceptronClient {
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()
             .collect();
-        if let Some(system) = profile.question.resolve_system(&output_format, request.media.modality()) {
+        if let Some(system) = profile
+            .question
+            .resolve_system(&output_format, request.media.modality())
+        {
             system_prompts.push(system.to_string());
         }
         let desc = RequestDescriptor {

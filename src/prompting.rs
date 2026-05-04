@@ -117,7 +117,6 @@ impl DetectPromptTemplate {
     }
 }
 
-
 /// A collection of prompt templates for a specific model family.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PromptProfile {
