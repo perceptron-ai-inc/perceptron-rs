@@ -1,21 +1,42 @@
+use crate::media::Modality;
 use crate::types::{CaptionStyle, OcrMode, OutputFormat};
+
+/// A prompt whose text varies by media modality.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModalityPrompt {
+    /// Text used when the request media is an image.
+    image: &'static str,
+    /// Text used when the request media is a video.
+    video: &'static str,
+}
+
+impl ModalityPrompt {
+    /// Return the prompt text for the given modality.
+    pub fn get(&self, modality: Modality) -> &'static str {
+        match modality {
+            Modality::Image => self.image,
+            Modality::Video => self.video,
+        }
+    }
+}
 
 /// Prompt template for question requests.
 #[derive(Debug, Clone, PartialEq)]
 pub struct QuestionPromptTemplate {
     /// System instruction for open-ended (text) questions.
-    pub open_instruction: Option<&'static str>,
+    open_instruction: Option<ModalityPrompt>,
     /// System instruction for grounded (spatial) questions.
-    pub grounded_instruction: Option<&'static str>,
+    grounded_instruction: Option<ModalityPrompt>,
 }
 
 impl QuestionPromptTemplate {
-    /// Return the system instruction for the given output format.
-    pub fn system(&self, output_format: &OutputFormat) -> Option<&'static str> {
-        match output_format {
-            OutputFormat::Text => self.open_instruction,
-            _ => self.grounded_instruction,
-        }
+    /// Resolve the system instruction for the given output format and modality.
+    pub fn resolve_system(&self, output_format: &OutputFormat, modality: Modality) -> Option<&'static str> {
+        let prompt = match output_format {
+            OutputFormat::Text => self.open_instruction.as_ref(),
+            _ => self.grounded_instruction.as_ref(),
+        }?;
+        Some(prompt.get(modality))
     }
 }
 
@@ -23,19 +44,24 @@ impl QuestionPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CaptionPromptTemplate {
     /// Optional system instruction for the caption endpoint.
-    pub system: Option<&'static str>,
+    system: Option<ModalityPrompt>,
     /// User text for concise captions.
-    pub concise: &'static str,
+    concise: ModalityPrompt,
     /// User text for detailed captions.
-    pub detailed: &'static str,
+    detailed: ModalityPrompt,
 }
 
 impl CaptionPromptTemplate {
-    /// Return the user text for the given caption style.
-    pub fn user_text(&self, style: &CaptionStyle) -> &'static str {
+    /// Resolve the system instruction for the given modality, if any.
+    pub fn resolve_system(&self, modality: Modality) -> Option<&'static str> {
+        self.system.as_ref().map(|p| p.get(modality))
+    }
+
+    /// Resolve the user text for the given caption style and modality.
+    pub fn resolve_user(&self, style: &CaptionStyle, modality: Modality) -> &'static str {
         match style {
-            CaptionStyle::Concise => self.concise,
-            CaptionStyle::Detailed => self.detailed,
+            CaptionStyle::Concise => self.concise.get(modality),
+            CaptionStyle::Detailed => self.detailed.get(modality),
         }
     }
 }
@@ -44,22 +70,27 @@ impl CaptionPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct OcrPromptTemplate {
     /// Optional system instruction for the OCR endpoint.
-    pub system: Option<&'static str>,
+    system: Option<ModalityPrompt>,
     /// User text for plain mode (None means no user text).
-    pub plain: Option<&'static str>,
+    plain: Option<ModalityPrompt>,
     /// User text for markdown mode.
-    pub markdown: &'static str,
+    markdown: ModalityPrompt,
     /// User text for HTML mode.
-    pub html: &'static str,
+    html: ModalityPrompt,
 }
 
 impl OcrPromptTemplate {
-    /// Return the user text for the given OCR mode, or `None` for plain when the profile omits it.
-    pub fn user_text(&self, mode: &OcrMode) -> Option<&'static str> {
+    /// Resolve the system instruction for the given modality, if any.
+    pub fn resolve_system(&self, modality: Modality) -> Option<&'static str> {
+        self.system.as_ref().map(|p| p.get(modality))
+    }
+
+    /// Resolve the user text for the given OCR mode and modality, or `None` for plain when omitted.
+    pub fn resolve_user(&self, mode: &OcrMode, modality: Modality) -> Option<&'static str> {
         match mode {
-            OcrMode::Plain => self.plain,
-            OcrMode::Markdown => Some(self.markdown),
-            OcrMode::Html => Some(self.html),
+            OcrMode::Plain => self.plain.as_ref().map(|p| p.get(modality)),
+            OcrMode::Markdown => Some(self.markdown.get(modality)),
+            OcrMode::Html => Some(self.html.get(modality)),
         }
     }
 }
@@ -68,17 +99,20 @@ impl OcrPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DetectPromptTemplate {
     /// System text when no categories are specified.
-    pub general: &'static str,
+    general: ModalityPrompt,
     /// Template with `{categories}` placeholder for category-specific detection.
-    pub category_template: &'static str,
+    category_template: ModalityPrompt,
 }
 
 impl DetectPromptTemplate {
-    /// Return the system text, substituting categories if provided.
-    pub fn system_text(&self, categories: Option<&[String]>) -> String {
+    /// Resolve the system text for the given categories and modality, substituting `{categories}` if provided.
+    pub fn resolve_system(&self, categories: Option<&[String]>, modality: Modality) -> String {
         match categories {
-            Some(cats) if !cats.is_empty() => self.category_template.replace("{categories}", &cats.join(", ")),
-            _ => self.general.to_string(),
+            Some(cats) if !cats.is_empty() => self
+                .category_template
+                .get(modality)
+                .replace("{categories}", &cats.join(", ")),
+            _ => self.general.get(modality).to_string(),
         }
     }
 }
@@ -107,45 +141,87 @@ const ISAAC: PromptProfile = PromptProfile {
     },
     caption: CaptionPromptTemplate {
         system: None,
-        concise: "Provide a concise, human-friendly caption for the upcoming image.",
-        detailed: "Provide a detailed caption describing key objects, relationships, and context in the upcoming image.",
+        concise: ModalityPrompt {
+            image: "Provide a concise, human-friendly caption for the upcoming image.",
+            video: "Provide a concise, human-friendly caption for the upcoming video.",
+        },
+        detailed: ModalityPrompt {
+            image: "Provide a detailed caption describing key objects, relationships, and context in the upcoming image.",
+            video: "Provide a detailed caption describing key objects, relationships, and context in the upcoming video.",
+        },
     },
     ocr: OcrPromptTemplate {
-        system: Some(
-            "You are an OCR (Optical Character Recognition) system. \
-            Accurately detect, extract, and transcribe all readable text from the image.",
-        ),
+        system: Some(ModalityPrompt {
+            image: "You are an OCR (Optical Character Recognition) system. \
+                Accurately detect, extract, and transcribe all readable text from the image.",
+            video: "You are an OCR (Optical Character Recognition) system. \
+                Accurately detect, extract, and transcribe all readable text from the video.",
+        }),
         plain: None,
-        markdown: "Transcribe every readable word in the image using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.",
-        html: "Transcribe every readable word in the image using HTML markup.",
+        markdown: ModalityPrompt {
+            image: "Transcribe every readable word in the image using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.",
+            video: "Transcribe every readable word in the video using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.",
+        },
+        html: ModalityPrompt {
+            image: "Transcribe every readable word in the image using HTML markup.",
+            video: "Transcribe every readable word in the video using HTML markup.",
+        },
     },
     detect: DetectPromptTemplate {
-        general: "Your goal is to segment out the objects in the scene",
-        category_template: "Your goal is to segment out the following categories: {categories}",
+        general: ModalityPrompt {
+            image: "Your goal is to segment out the objects in the scene",
+            video: "Your goal is to segment out the objects in the scene",
+        },
+        category_template: ModalityPrompt {
+            image: "Your goal is to segment out the following categories: {categories}",
+            video: "Your goal is to segment out the following categories: {categories}",
+        },
     },
 };
 
 const QWEN: PromptProfile = PromptProfile {
     question: QuestionPromptTemplate {
         open_instruction: None,
-        grounded_instruction: Some(
-            "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format.",
-        ),
+        grounded_instruction: Some(ModalityPrompt {
+            image: "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format.",
+            video: "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format.",
+        }),
     },
     caption: CaptionPromptTemplate {
         system: None,
-        concise: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",
-        detailed: "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the image.",
+        concise: ModalityPrompt {
+            image: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",
+            video: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",
+        },
+        detailed: ModalityPrompt {
+            image: "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the image.",
+            video: "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the video.",
+        },
     },
     ocr: OcrPromptTemplate {
         system: None,
-        plain: Some("Read all the text in the image."),
-        markdown: "qwenvl markdown",
-        html: "qwenvl html",
+        plain: Some(ModalityPrompt {
+            image: "Read all the text in the image.",
+            video: "Read all the text in the video.",
+        }),
+        markdown: ModalityPrompt {
+            image: "qwenvl markdown",
+            video: "qwenvl markdown",
+        },
+        html: ModalityPrompt {
+            image: "qwenvl html",
+            video: "qwenvl html",
+        },
     },
     detect: DetectPromptTemplate {
-        general: "Locate every object of interest and report bounding box coordinates in JSON format.",
-        category_template: "Locate every instance that belongs to the following categories: \"{categories}\". Report bbox coordinates in JSON format.",
+        general: ModalityPrompt {
+            image: "Locate every object of interest and report bounding box coordinates in JSON format.",
+            video: "Locate every object of interest and report bounding box coordinates in JSON format.",
+        },
+        category_template: ModalityPrompt {
+            image: "Locate every instance that belongs to the following categories: \"{categories}\". Report bbox coordinates in JSON format.",
+            video: "Locate every instance that belongs to the following categories: \"{categories}\". Report bbox coordinates in JSON format.",
+        },
     },
 };
 

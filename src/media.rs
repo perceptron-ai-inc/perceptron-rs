@@ -1,17 +1,19 @@
 use serde::{Deserialize, Serialize};
 
 /// The modality of media being processed.
-#[derive(Debug, Clone, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Modality {
     /// Image media.
     Image,
+    /// Video media.
+    Video,
 }
 
 /// Media encoding format.
-#[derive(Debug, Clone, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -22,23 +24,31 @@ pub enum MediaFormat {
     Jpeg,
     /// WebP image.
     Webp,
+    /// MP4 video.
+    Mp4,
+    /// WebM video.
+    Webm,
 }
 
 impl MediaFormat {
     /// Returns the [`Modality`] for this format.
-    pub fn modality(&self) -> &Modality {
+    pub fn modality(&self) -> Modality {
         match self {
-            MediaFormat::Png | MediaFormat::Jpeg | MediaFormat::Webp => &Modality::Image,
+            MediaFormat::Png | MediaFormat::Jpeg | MediaFormat::Webp => Modality::Image,
+            MediaFormat::Mp4 | MediaFormat::Webm => Modality::Video,
         }
     }
 
-    /// Returns the MIME type string (e.g. `"image/png"`).
+    /// Returns the MIME type string (e.g. `"image/png"`, `"video/mp4"`).
     pub fn mime(&self) -> String {
         format!("{}/{}", self.modality(), self)
     }
 }
 
 /// Media for a request — either a URL or base64-encoded data.
+///
+/// The SDK does not validate that the media's modality matches the target model's
+/// supported modalities; mismatches surface as a server-side error.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -68,7 +78,18 @@ impl Media {
         }
     }
 
+    /// Create from a video URL.
+    pub fn video_url(url: impl Into<String>) -> Self {
+        Media::Url {
+            modality: Modality::Video,
+            src: url.into(),
+        }
+    }
+
     /// Create from base64-encoded data.
+    ///
+    /// For media larger than ~1MB, prefer [`Self::image_url`] or [`Self::video_url`];
+    /// large base64 payloads can hit request-size limits and increase request latency.
     pub fn base64(format: MediaFormat, data: impl Into<String>) -> Self {
         Media::Base64 {
             format,
@@ -77,9 +98,9 @@ impl Media {
     }
 
     /// Returns the [`Modality`] for this media.
-    pub fn modality(&self) -> &Modality {
+    pub fn modality(&self) -> Modality {
         match self {
-            Media::Url { modality, .. } => modality,
+            Media::Url { modality, .. } => *modality,
             Media::Base64 { format, .. } => format.modality(),
         }
     }
@@ -107,6 +128,8 @@ mod tests {
         assert!(matches!(MediaFormat::Png.modality(), Modality::Image));
         assert!(matches!(MediaFormat::Jpeg.modality(), Modality::Image));
         assert!(matches!(MediaFormat::Webp.modality(), Modality::Image));
+        assert!(matches!(MediaFormat::Mp4.modality(), Modality::Video));
+        assert!(matches!(MediaFormat::Webm.modality(), Modality::Video));
     }
 
     #[test]
@@ -114,6 +137,8 @@ mod tests {
         assert_eq!(MediaFormat::Png.mime(), "image/png");
         assert_eq!(MediaFormat::Jpeg.mime(), "image/jpeg");
         assert_eq!(MediaFormat::Webp.mime(), "image/webp");
+        assert_eq!(MediaFormat::Mp4.mime(), "video/mp4");
+        assert_eq!(MediaFormat::Webm.mime(), "video/webm");
     }
 
     #[test]
@@ -124,9 +149,23 @@ mod tests {
     }
 
     #[test]
+    fn media_video_url() {
+        let media = Media::video_url("https://example.com/vid.mp4");
+        assert!(matches!(media.modality(), Modality::Video));
+        assert_eq!(media.to_url(), "https://example.com/vid.mp4");
+    }
+
+    #[test]
     fn media_base64_image() {
         let media = Media::base64(MediaFormat::Png, "abc123");
         assert!(matches!(media.modality(), Modality::Image));
         assert_eq!(media.to_url(), "data:image/png;base64,abc123");
+    }
+
+    #[test]
+    fn media_base64_video() {
+        let media = Media::base64(MediaFormat::Mp4, "xyz789");
+        assert!(matches!(media.modality(), Modality::Video));
+        assert_eq!(media.to_url(), "data:video/mp4;base64,xyz789");
     }
 }

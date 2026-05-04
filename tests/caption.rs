@@ -150,6 +150,29 @@ async fn multiple_boxes() {
 }
 
 #[tokio::test]
+async fn video_modality_substitutes_prompt() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}},
+                    {"type": "text", "text": "Provide a concise, human-friendly caption for the upcoming video."}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = CaptionRequest::new("isaac-test", Media::video_url("https://example.com/vid.mp4"));
+    let response = client.caption(request).await.unwrap();
+    assert_single_cat_box(&response);
+}
+
+#[tokio::test]
 async fn base64_media() {
     let (server, client) = common::setup().await;
     common::mock_response(

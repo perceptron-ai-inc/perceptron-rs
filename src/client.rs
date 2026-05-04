@@ -3,7 +3,7 @@ use reqwest::Client;
 use crate::api::ApiClient;
 use crate::api::chat_completions::*;
 use crate::error::PerceptronError;
-use crate::media::Media;
+use crate::media::{Media, Modality};
 use crate::models::Model;
 use crate::parsing;
 use crate::prompting;
@@ -143,7 +143,10 @@ impl Perceptron for PerceptronClient {
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()
             .collect();
-        if let Some(system) = profile.question.system(&output_format) {
+        if let Some(system) = profile
+            .question
+            .resolve_system(&output_format, request.media.modality())
+        {
             system_prompts.push(system.to_string());
         }
         let desc = RequestDescriptor {
@@ -186,10 +189,11 @@ impl Perceptron for PerceptronClient {
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()
             .collect();
-        if let Some(system) = profile.caption.system {
+        let modality = request.media.modality();
+        if let Some(system) = profile.caption.resolve_system(modality) {
             system_prompts.push(system.to_string());
         }
-        let user_text = Some(profile.caption.user_text(&request.style).to_string());
+        let user_text = Some(profile.caption.resolve_user(&request.style, modality).to_string());
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -208,12 +212,13 @@ impl Perceptron for PerceptronClient {
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
         let profile = prompting::resolve_prompt_profile(&request.model);
         let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
-        if let Some(system) = profile.ocr.system {
+        let modality = request.media.modality();
+        if let Some(system) = profile.ocr.resolve_system(modality) {
             system_prompts.push(system.to_string());
         }
         let user_text = request
             .prompt
-            .or_else(|| profile.ocr.user_text(&request.mode).map(|s| s.to_string()));
+            .or_else(|| profile.ocr.resolve_user(&request.mode, modality).map(str::to_string));
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -234,7 +239,11 @@ impl Perceptron for PerceptronClient {
         let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
             .into_iter()
             .collect();
-        system_prompts.push(profile.detect.system_text(request.classes.as_deref()));
+        system_prompts.push(
+            profile
+                .detect
+                .resolve_system(request.classes.as_deref(), request.media.modality()),
+        );
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
@@ -297,9 +306,14 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
     }
 
     let media_url = desc.media.to_url();
-    let media_part = ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
-        image_url: ImageUrl { url: media_url },
-    });
+    let media_part = match desc.media.modality() {
+        Modality::Image => ChatCompletionContentPart::ImageUrl(ChatCompletionContentPartImage {
+            image_url: ImageUrl { url: media_url },
+        }),
+        Modality::Video => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
+            video_url: VideoUrl { url: media_url },
+        }),
+    };
     let mut user_parts = vec![media_part];
 
     if let Some(text) = desc.user_text {

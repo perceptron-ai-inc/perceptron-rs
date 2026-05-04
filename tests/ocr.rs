@@ -105,6 +105,30 @@ async fn html_mode() {
 }
 
 #[tokio::test]
+async fn video_modality_substitutes_prompt() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "system", "content": "You are an OCR (Optical Character Recognition) system. Accurately detect, extract, and transcribe all readable text from the video."},
+                {"role": "user", "content": [
+                    {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}},
+                    {"type": "text", "text": "Transcribe every readable word in the video using Markdown formatting with headings, lists, tables, and other structural elements as appropriate."}
+                ]}
+            ]
+        })),
+        common::response("Hello World", None),
+    )
+    .await;
+
+    let request =
+        OcrRequest::new("isaac-test", Media::video_url("https://example.com/vid.mp4")).mode(OcrMode::Markdown);
+    let response = client.ocr(request).await.unwrap();
+    assert_eq!(response.content, Some("Hello World".to_string()));
+}
+
+#[tokio::test]
 async fn base64_media() {
     let (server, client) = common::setup().await;
     common::mock_response(
