@@ -28,7 +28,7 @@ jobs:
       - name: Install nightly rust for udeps
         uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly-2025-08-09
+          toolchain: nightly-2026-04-01
 
       - name: Get cache keys
         id: cache-keys
@@ -89,9 +89,9 @@ jobs:
 
       - name: Check for unused dependencies
         run: |
-          if ! cargo +nightly-2025-08-09 udeps --all-targets; then
+          if ! cargo +nightly-2026-04-01 udeps --all-targets; then
             echo "Found unused dependencies!"
-            echo "Please run: cargo install cargo-udeps && cargo +nightly-2025-08-09 udeps --all-targets"
+            echo "Please run: cargo install cargo-udeps && cargo +nightly-2026-04-01 udeps --all-targets"
             echo "Remove any unused dependencies from Cargo.toml"
             exit 1
           fi
