@@ -212,13 +212,12 @@ impl Perceptron for PerceptronClient {
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
         let profile = prompting::resolve_prompt_profile(&request.model);
         let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
-        let modality = request.media.modality();
-        if let Some(system) = profile.ocr.resolve_system(modality) {
+        if let Some(system) = profile.ocr.resolve_system() {
             system_prompts.push(system.to_string());
         }
         let user_text = request
             .prompt
-            .or_else(|| profile.ocr.resolve_user(&request.mode, modality).map(str::to_string));
+            .or_else(|| profile.ocr.resolve_user(&request.mode).map(str::to_string));
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,
