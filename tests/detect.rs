@@ -1,4 +1,4 @@
-use perceptron_ai::{BoundingBox, DetectRequest, Media, MediaFormat, Perceptron, Pointing};
+use perceptron_ai::{BoundingBox, DetectRequest, Image, ImageFormat, Perceptron, Pointing};
 use rstest::rstest;
 use serde_json::json;
 use wiremock::matchers::body_partial_json;
@@ -52,7 +52,7 @@ async fn general_detection(#[case] model: &str, #[case] expected_system: &str) {
     )
     .await;
 
-    let request = DetectRequest::new(model, Media::image_url("https://example.com/img.jpg"));
+    let request = DetectRequest::new(model, Image::url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
     assert_single_cat_box(&response);
 }
@@ -78,7 +78,7 @@ async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
     )
     .await;
 
-    let request = DetectRequest::new(model, Media::image_url("https://example.com/img.jpg"))
+    let request = DetectRequest::new(model, Image::url("https://example.com/img.jpg"))
         .classes(vec!["cat".to_string(), "dog".to_string()]);
     let response = client.detect(request).await.unwrap();
 
@@ -117,7 +117,7 @@ async fn multiple_detections() {
     )
     .await;
 
-    let request = DetectRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
+    let request = DetectRequest::new("isaac-test", Image::url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
 
     assert_eq!(
@@ -161,7 +161,7 @@ async fn collection() {
     )
     .await;
 
-    let request = DetectRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
+    let request = DetectRequest::new("isaac-test", Image::url("https://example.com/img.jpg"));
     let response = client.detect(request).await.unwrap();
 
     assert_eq!(
@@ -206,7 +206,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = DetectRequest::new("isaac-test", Media::base64(MediaFormat::Png, "imgdata"));
+    let request = DetectRequest::new("isaac-test", Image::base64(ImageFormat::Png, "imgdata"));
     let response = client.detect(request).await.unwrap();
 
     assert_single_cat_box(&response);
@@ -227,7 +227,7 @@ async fn with_reasoning() {
     )
     .await;
 
-    let request = DetectRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg")).reasoning(true);
+    let request = DetectRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).reasoning(true);
     let response = client.detect(request).await.unwrap();
 
     assert!(response.content.is_some());

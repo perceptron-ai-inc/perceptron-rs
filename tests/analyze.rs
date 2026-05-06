@@ -1,5 +1,5 @@
 use perceptron_ai::{
-    AnalyzeRequest, BoundingBox, Media, MediaFormat, OutputFormat, Perceptron, Point, Pointing, Polygon,
+    AnalyzeRequest, BoundingBox, Image, ImageFormat, OutputFormat, Perceptron, Point, Pointing, Polygon, Video,
 };
 use serde_json::json;
 use wiremock::matchers::{body_partial_json, method, path};
@@ -8,7 +8,7 @@ use wiremock::{Mock, ResponseTemplate};
 mod common;
 
 fn test_request(model: &str) -> AnalyzeRequest {
-    AnalyzeRequest::new(model, "Describe this", Media::image_url("https://example.com/img.jpg"))
+    AnalyzeRequest::new(model, "Describe this", Image::url("https://example.com/img.jpg"))
 }
 
 #[tokio::test]
@@ -316,7 +316,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = AnalyzeRequest::new("test-model", "Describe this", Media::base64(MediaFormat::Png, "abc123"));
+    let request = AnalyzeRequest::new("test-model", "Describe this", Image::base64(ImageFormat::Png, "abc123"));
     let response = client.analyze(request).await.unwrap();
 
     assert_eq!(response.content, Some("a cat".to_string()));
@@ -339,11 +339,7 @@ async fn video_url_media() {
     )
     .await;
 
-    let request = AnalyzeRequest::new(
-        "test-model",
-        "Describe this",
-        Media::video_url("https://example.com/vid.mp4"),
-    );
+    let request = AnalyzeRequest::new("test-model", "Describe this", Video::url("https://example.com/vid.mp4"));
     let response = client.analyze(request).await.unwrap();
 
     assert_eq!(response.content, Some("a video of a cat".to_string()));

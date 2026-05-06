@@ -1,4 +1,4 @@
-use crate::media::Modality;
+use crate::media::Media;
 use crate::types::{CaptionStyle, OcrMode, OutputFormat};
 
 /// A prompt whose text varies by media modality.
@@ -11,11 +11,11 @@ pub struct ModalityPrompt {
 }
 
 impl ModalityPrompt {
-    /// Return the prompt text for the given modality.
-    pub fn get(&self, modality: Modality) -> &'static str {
-        match modality {
-            Modality::Image => self.image,
-            Modality::Video => self.video,
+    /// Return the prompt text for the given media.
+    pub fn get(&self, media: &Media) -> &'static str {
+        match media {
+            Media::Image(_) => self.image,
+            Media::Video(_) => self.video,
         }
     }
 }
@@ -30,13 +30,13 @@ pub struct QuestionPromptTemplate {
 }
 
 impl QuestionPromptTemplate {
-    /// Resolve the system instruction for the given output format and modality.
-    pub fn resolve_system(&self, output_format: &OutputFormat, modality: Modality) -> Option<&'static str> {
+    /// Resolve the system instruction for the given output format and media.
+    pub fn resolve_system(&self, output_format: &OutputFormat, media: &Media) -> Option<&'static str> {
         let prompt = match output_format {
             OutputFormat::Text => self.open_instruction.as_ref(),
             _ => self.grounded_instruction.as_ref(),
         }?;
-        Some(prompt.get(modality))
+        Some(prompt.get(media))
     }
 }
 
@@ -52,16 +52,16 @@ pub struct CaptionPromptTemplate {
 }
 
 impl CaptionPromptTemplate {
-    /// Resolve the system instruction for the given modality, if any.
-    pub fn resolve_system(&self, modality: Modality) -> Option<&'static str> {
-        self.system.as_ref().map(|p| p.get(modality))
+    /// Resolve the system instruction for the given media, if any.
+    pub fn resolve_system(&self, media: &Media) -> Option<&'static str> {
+        self.system.as_ref().map(|p| p.get(media))
     }
 
-    /// Resolve the user text for the given caption style and modality.
-    pub fn resolve_user(&self, style: &CaptionStyle, modality: Modality) -> &'static str {
+    /// Resolve the user text for the given caption style and media.
+    pub fn resolve_user(&self, style: &CaptionStyle, media: &Media) -> &'static str {
         match style {
-            CaptionStyle::Concise => self.concise.get(modality),
-            CaptionStyle::Detailed => self.detailed.get(modality),
+            CaptionStyle::Concise => self.concise.get(media),
+            CaptionStyle::Detailed => self.detailed.get(media),
         }
     }
 }
@@ -70,27 +70,27 @@ impl CaptionPromptTemplate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct OcrPromptTemplate {
     /// Optional system instruction for the OCR endpoint.
-    system: Option<ModalityPrompt>,
+    system: Option<&'static str>,
     /// User text for plain mode (None means no user text).
-    plain: Option<ModalityPrompt>,
+    plain: Option<&'static str>,
     /// User text for markdown mode.
-    markdown: ModalityPrompt,
+    markdown: &'static str,
     /// User text for HTML mode.
-    html: ModalityPrompt,
+    html: &'static str,
 }
 
 impl OcrPromptTemplate {
-    /// Resolve the system instruction for the given modality, if any.
-    pub fn resolve_system(&self, modality: Modality) -> Option<&'static str> {
-        self.system.as_ref().map(|p| p.get(modality))
+    /// Resolve the system instruction, if any.
+    pub fn resolve_system(&self) -> Option<&'static str> {
+        self.system
     }
 
-    /// Resolve the user text for the given OCR mode and modality, or `None` for plain when omitted.
-    pub fn resolve_user(&self, mode: &OcrMode, modality: Modality) -> Option<&'static str> {
+    /// Resolve the user text for the given OCR mode, or `None` for plain when omitted.
+    pub fn resolve_user(&self, mode: &OcrMode) -> Option<&'static str> {
         match mode {
-            OcrMode::Plain => self.plain.as_ref().map(|p| p.get(modality)),
-            OcrMode::Markdown => Some(self.markdown.get(modality)),
-            OcrMode::Html => Some(self.html.get(modality)),
+            OcrMode::Plain => self.plain,
+            OcrMode::Markdown => Some(self.markdown),
+            OcrMode::Html => Some(self.html),
         }
     }
 }
@@ -105,14 +105,14 @@ pub struct DetectPromptTemplate {
 }
 
 impl DetectPromptTemplate {
-    /// Resolve the system text for the given categories and modality, substituting `{categories}` if provided.
-    pub fn resolve_system(&self, categories: Option<&[String]>, modality: Modality) -> String {
+    /// Resolve the system text for the given categories and media, substituting `{categories}` if provided.
+    pub fn resolve_system(&self, categories: Option<&[String]>, media: &Media) -> String {
         match categories {
             Some(cats) if !cats.is_empty() => self
                 .category_template
-                .get(modality)
+                .get(media)
                 .replace("{categories}", &cats.join(", ")),
-            _ => self.general.get(modality).to_string(),
+            _ => self.general.get(media).to_string(),
         }
     }
 }
@@ -151,21 +151,13 @@ const ISAAC: PromptProfile = PromptProfile {
         },
     },
     ocr: OcrPromptTemplate {
-        system: Some(ModalityPrompt {
-            image: "You are an OCR (Optical Character Recognition) system. \
+        system: Some(
+            "You are an OCR (Optical Character Recognition) system. \
                 Accurately detect, extract, and transcribe all readable text from the image.",
-            video: "You are an OCR (Optical Character Recognition) system. \
-                Accurately detect, extract, and transcribe all readable text from the video.",
-        }),
+        ),
         plain: None,
-        markdown: ModalityPrompt {
-            image: "Transcribe every readable word in the image using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.",
-            video: "Transcribe every readable word in the video using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.",
-        },
-        html: ModalityPrompt {
-            image: "Transcribe every readable word in the image using HTML markup.",
-            video: "Transcribe every readable word in the video using HTML markup.",
-        },
+        markdown: "Transcribe every readable word in the image using Markdown formatting with headings, lists, tables, and other structural elements as appropriate.",
+        html: "Transcribe every readable word in the image using HTML markup.",
     },
     detect: DetectPromptTemplate {
         general: ModalityPrompt {
@@ -200,18 +192,9 @@ const QWEN: PromptProfile = PromptProfile {
     },
     ocr: OcrPromptTemplate {
         system: None,
-        plain: Some(ModalityPrompt {
-            image: "Read all the text in the image.",
-            video: "Read all the text in the video.",
-        }),
-        markdown: ModalityPrompt {
-            image: "qwenvl markdown",
-            video: "qwenvl markdown",
-        },
-        html: ModalityPrompt {
-            image: "qwenvl html",
-            video: "qwenvl html",
-        },
+        plain: Some("Read all the text in the image."),
+        markdown: "qwenvl markdown",
+        html: "qwenvl html",
     },
     detect: DetectPromptTemplate {
         general: ModalityPrompt {

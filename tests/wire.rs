@@ -1,5 +1,5 @@
 use perceptron_ai::{
-    AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Media, MediaFormat, Modality, Model, OcrMode,
+    AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Image, ImageFormat, Modality, Model, OcrMode,
     OcrRequest, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, SamplingParameter, TextResponse,
 };
 use serde_json::json;
@@ -19,19 +19,15 @@ where
 #[test]
 fn analyze_request_all_fields() {
     roundtrip(
-        &AnalyzeRequest::new(
-            "model-v1",
-            "Describe this",
-            Media::image_url("https://example.com/img.jpg"),
-        )
-        .output_format(OutputFormat::Point)
-        .reasoning(true)
-        .temperature(0.5)
-        .top_p(0.25)
-        .top_k(50)
-        .frequency_penalty(0.5)
-        .presence_penalty(0.125)
-        .max_tokens(100),
+        &AnalyzeRequest::new("model-v1", "Describe this", Image::url("https://example.com/img.jpg"))
+            .output_format(OutputFormat::Point)
+            .reasoning(true)
+            .temperature(0.5)
+            .top_p(0.25)
+            .top_k(50)
+            .frequency_penalty(0.5)
+            .presence_penalty(0.125)
+            .max_tokens(100),
         json!({
             "message": "Describe this",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
@@ -51,7 +47,7 @@ fn analyze_request_all_fields() {
 #[test]
 fn caption_request_all_fields() {
     roundtrip(
-        &CaptionRequest::new("model-v1", Media::base64(MediaFormat::Jpeg, "data"))
+        &CaptionRequest::new("model-v1", Image::base64(ImageFormat::Jpeg, "data"))
             .style(CaptionStyle::Detailed)
             .output_format(OutputFormat::Box)
             .reasoning(true)
@@ -62,7 +58,7 @@ fn caption_request_all_fields() {
             .presence_penalty(0.125)
             .max_tokens(100),
         json!({
-            "media": {"type": "base64", "format": "jpeg", "data": "data"},
+            "media": {"modality": "image", "type": "base64", "format": "jpeg", "data": "data"},
             "style": "detailed",
             "output_format": "box",
             "model": "model-v1",
@@ -80,7 +76,7 @@ fn caption_request_all_fields() {
 #[test]
 fn ocr_request_all_fields() {
     roundtrip(
-        &OcrRequest::new("model-v1", Media::image_url("https://example.com/doc.jpg"))
+        &OcrRequest::new("model-v1", Image::url("https://example.com/doc.jpg"))
             .mode(OcrMode::Markdown)
             .reasoning(true)
             .temperature(0.5)
@@ -90,7 +86,7 @@ fn ocr_request_all_fields() {
             .presence_penalty(0.125)
             .max_tokens(100),
         json!({
-            "media": {"type": "url", "modality": "image", "src": "https://example.com/doc.jpg"},
+            "image": {"type": "url", "src": "https://example.com/doc.jpg"},
             "mode": "markdown",
             "model": "model-v1",
             "reasoning": true,
@@ -107,7 +103,7 @@ fn ocr_request_all_fields() {
 #[test]
 fn detect_request_all_fields() {
     roundtrip(
-        &DetectRequest::new("model-v1", Media::image_url("https://example.com/img.jpg"))
+        &DetectRequest::new("model-v1", Image::url("https://example.com/img.jpg"))
             .classes(vec!["cat".to_string(), "dog".to_string()])
             .reasoning(true)
             .temperature(0.5)
@@ -134,19 +130,15 @@ fn detect_request_all_fields() {
 #[test]
 fn question_request_all_fields() {
     roundtrip(
-        &QuestionRequest::new(
-            "model-v1",
-            "What is this?",
-            Media::image_url("https://example.com/img.jpg"),
-        )
-        .output_format(OutputFormat::Point)
-        .reasoning(true)
-        .temperature(0.5)
-        .top_p(0.25)
-        .top_k(50)
-        .frequency_penalty(0.5)
-        .presence_penalty(0.125)
-        .max_tokens(100),
+        &QuestionRequest::new("model-v1", "What is this?", Image::url("https://example.com/img.jpg"))
+            .output_format(OutputFormat::Point)
+            .reasoning(true)
+            .temperature(0.5)
+            .top_p(0.25)
+            .top_k(50)
+            .frequency_penalty(0.5)
+            .presence_penalty(0.125)
+            .max_tokens(100),
         json!({
             "question": "What is this?",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
