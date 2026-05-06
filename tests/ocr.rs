@@ -1,4 +1,4 @@
-use perceptron_ai::{Media, MediaFormat, OcrMode, OcrRequest, Perceptron};
+use perceptron_ai::{Image, ImageFormat, OcrMode, OcrRequest, Perceptron};
 use rstest::rstest;
 use serde_json::json;
 use wiremock::matchers::body_partial_json;
@@ -42,7 +42,7 @@ async fn plain(#[case] model: &str, #[case] expected_system: Option<&str>, #[cas
     )
     .await;
 
-    let request = OcrRequest::new(model, Media::image_url("https://example.com/doc.jpg"));
+    let request = OcrRequest::new(model, Image::url("https://example.com/doc.jpg"));
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("Hello World".to_string()));
 }
@@ -76,7 +76,7 @@ async fn markdown_mode(#[case] model: &str, #[case] expected_system: Option<&str
     )
     .await;
 
-    let request = OcrRequest::new(model, Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
+    let request = OcrRequest::new(model, Image::url("https://example.com/doc.jpg")).mode(OcrMode::Markdown);
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("# Hello\n\nWorld".to_string()));
 }
@@ -99,7 +99,7 @@ async fn html_mode() {
     )
     .await;
 
-    let request = OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).mode(OcrMode::Html);
+    let request = OcrRequest::new("isaac-test", Image::url("https://example.com/doc.jpg")).mode(OcrMode::Html);
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("<p>Hello World</p>".to_string()));
 }
@@ -121,7 +121,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = OcrRequest::new("isaac-test", Media::base64(MediaFormat::Webp, "docdata"));
+    let request = OcrRequest::new("isaac-test", Image::base64(ImageFormat::Webp, "docdata"));
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("Hello World".to_string()));
 }
@@ -141,7 +141,7 @@ async fn with_reasoning() {
     )
     .await;
 
-    let request = OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).reasoning(true);
+    let request = OcrRequest::new("isaac-test", Image::url("https://example.com/doc.jpg")).reasoning(true);
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("Hello".to_string()));
     assert_eq!(response.reasoning, Some("I can see text".to_string()));
@@ -166,7 +166,7 @@ async fn custom_prompt() {
     .await;
 
     let request =
-        OcrRequest::new("isaac-test", Media::image_url("https://example.com/doc.jpg")).prompt("Extract only the dates");
+        OcrRequest::new("isaac-test", Image::url("https://example.com/doc.jpg")).prompt("Extract only the dates");
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("2024-01-15".to_string()));
 }

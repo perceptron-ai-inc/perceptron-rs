@@ -1,4 +1,4 @@
-use perceptron_ai::{Media, MediaFormat, OutputFormat, Perceptron, QuestionRequest};
+use perceptron_ai::{Image, ImageFormat, OutputFormat, Perceptron, QuestionRequest};
 use rstest::rstest;
 use serde_json::json;
 use wiremock::matchers::body_partial_json;
@@ -32,7 +32,7 @@ async fn plain(#[case] model: &str, #[case] expected_system: Option<&str>) {
     let request = QuestionRequest::new(
         model,
         "What color is the cat?",
-        Media::image_url("https://example.com/img.jpg"),
+        Image::url("https://example.com/img.jpg"),
     );
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("The cat is orange".to_string()));
@@ -62,7 +62,7 @@ async fn with_grounded_output() {
     let request = QuestionRequest::new(
         "qwen3-vl-72b",
         "Where is the cat?",
-        Media::image_url("https://example.com/img.jpg"),
+        Image::url("https://example.com/img.jpg"),
     )
     .output_format(OutputFormat::Box);
     let response = client.question(request).await.unwrap();
@@ -91,7 +91,7 @@ async fn isaac_grounded_no_system() {
     let request = QuestionRequest::new(
         "isaac-test",
         "Where is the cat?",
-        Media::image_url("https://example.com/img.jpg"),
+        Image::url("https://example.com/img.jpg"),
     )
     .output_format(OutputFormat::Point);
     let response = client.question(request).await.unwrap();
@@ -116,7 +116,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = QuestionRequest::new("isaac-test", "What is this?", Media::base64(MediaFormat::Png, "abc123"));
+    let request = QuestionRequest::new("isaac-test", "What is this?", Image::base64(ImageFormat::Png, "abc123"));
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("a cat".to_string()));
 }
@@ -142,7 +142,7 @@ async fn with_reasoning() {
     let request = QuestionRequest::new(
         "isaac-test",
         "How many cats?",
-        Media::image_url("https://example.com/img.jpg"),
+        Image::url("https://example.com/img.jpg"),
     )
     .reasoning(true);
     let response = client.question(request).await.unwrap();

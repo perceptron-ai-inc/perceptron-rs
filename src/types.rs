@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::media::Media;
+use crate::media::{Image, Media};
 use crate::pointing::Pointing;
 
 /// Output format for model responses.
@@ -125,10 +125,10 @@ pub struct QuestionRequest {
 
 impl QuestionRequest {
     /// Create a new question request with required fields.
-    pub fn new(model: impl Into<String>, question: impl Into<String>, media: Media) -> Self {
+    pub fn new(model: impl Into<String>, question: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             question: question.into(),
-            media,
+            media: media.into(),
             output_format: None,
             model: model.into(),
             reasoning: None,
@@ -183,10 +183,10 @@ pub struct AnalyzeRequest {
 
 impl AnalyzeRequest {
     /// Create a new analysis request with required fields.
-    pub fn new(model: impl Into<String>, message: impl Into<String>, media: Media) -> Self {
+    pub fn new(model: impl Into<String>, message: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             message: message.into(),
-            media,
+            media: media.into(),
             output_format: None,
             model: model.into(),
             reasoning: None,
@@ -241,9 +241,9 @@ pub struct CaptionRequest {
 
 impl CaptionRequest {
     /// Create a new caption request.
-    pub fn new(model: impl Into<String>, media: Media) -> Self {
+    pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
-            media,
+            media: media.into(),
             style: CaptionStyle::default(),
             output_format: None,
             model: model.into(),
@@ -279,8 +279,8 @@ impl CaptionRequest {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct OcrRequest {
-    /// Media to extract text from.
-    pub media: Media,
+    /// Image to extract text from.
+    pub image: Image,
     /// OCR output mode.
     pub mode: OcrMode,
     /// Custom prompt to override the default OCR instruction.
@@ -306,9 +306,9 @@ pub struct OcrRequest {
 
 impl OcrRequest {
     /// Create a new OCR request.
-    pub fn new(model: impl Into<String>, media: Media) -> Self {
+    pub fn new(model: impl Into<String>, image: Image) -> Self {
         Self {
-            media,
+            image,
             mode: OcrMode::default(),
             prompt: None,
             model: model.into(),
@@ -368,9 +368,9 @@ pub struct DetectRequest {
 
 impl DetectRequest {
     /// Create a new detection request.
-    pub fn new(model: impl Into<String>, media: Media) -> Self {
+    pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
-            media,
+            media: media.into(),
             classes: None,
             model: model.into(),
             reasoning: None,

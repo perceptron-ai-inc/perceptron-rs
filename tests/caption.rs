@@ -1,5 +1,5 @@
 use perceptron_ai::{
-    BoundingBox, CaptionRequest, CaptionStyle, Media, MediaFormat, OutputFormat, Perceptron, Point, Pointing,
+    BoundingBox, CaptionRequest, CaptionStyle, Image, ImageFormat, OutputFormat, Perceptron, Point, Pointing, Video,
 };
 use rstest::rstest;
 use serde_json::json;
@@ -54,7 +54,7 @@ async fn concise(#[case] model: &str, #[case] expected_text: &str) {
     )
     .await;
 
-    let request = CaptionRequest::new(model, Media::image_url("https://example.com/img.jpg"));
+    let request = CaptionRequest::new(model, Image::url("https://example.com/img.jpg"));
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }
@@ -87,7 +87,7 @@ async fn detailed(#[case] model: &str, #[case] expected_text: &str) {
     .await;
 
     let request =
-        CaptionRequest::new(model, Media::image_url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
+        CaptionRequest::new(model, Image::url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }
@@ -104,7 +104,7 @@ async fn with_reasoning() {
     )
     .await;
 
-    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg")).reasoning(true);
+    let request = CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).reasoning(true);
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());
@@ -121,7 +121,7 @@ async fn multiple_boxes() {
     )
     .await;
 
-    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"));
+    let request = CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg"));
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());
@@ -167,7 +167,7 @@ async fn video_modality_substitutes_prompt() {
     )
     .await;
 
-    let request = CaptionRequest::new("isaac-test", Media::video_url("https://example.com/vid.mp4"));
+    let request = CaptionRequest::new("isaac-test", Video::url("https://example.com/vid.mp4"));
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }
@@ -190,7 +190,7 @@ async fn base64_media() {
     )
     .await;
 
-    let request = CaptionRequest::new("isaac-test", Media::base64(MediaFormat::Jpeg, "imgdata"));
+    let request = CaptionRequest::new("isaac-test", Image::base64(ImageFormat::Jpeg, "imgdata"));
     let response = client.caption(request).await.unwrap();
 
     assert_single_cat_box(&response);
@@ -208,7 +208,7 @@ async fn point_format() {
     )
     .await;
 
-    let request = CaptionRequest::new("isaac-test", Media::image_url("https://example.com/img.jpg"))
+    let request = CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg"))
         .output_format(OutputFormat::Point);
     let response = client.caption(request).await.unwrap();
 
