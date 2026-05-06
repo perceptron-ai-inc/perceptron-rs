@@ -3,20 +3,20 @@ use serde::{Deserialize, Serialize};
 use crate::media::{Image, Media};
 use crate::pointing::Pointing;
 
-/// Output format for model responses.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+/// Output format for model responses. `None` on a request means a plain text response;
+/// any variant here triggers spatial or temporal annotation extraction.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum OutputFormat {
-    /// Plain text response (default).
-    #[default]
-    Text,
     /// Return point coordinates as `<point>` tags for spatial annotation.
     Point,
     /// Return bounding box coordinates as `<point_box>` tags for spatial annotation.
     Box,
     /// Return polygon coordinates for spatial annotation.
     Polygon,
+    /// Return video clip annotations as `<clip />` self-closing tags.
+    Clip,
 }
 
 /// Style for caption requests.

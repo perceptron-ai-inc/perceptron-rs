@@ -31,10 +31,11 @@ pub struct QuestionPromptTemplate {
 
 impl QuestionPromptTemplate {
     /// Resolve the system instruction for the given output format and media.
-    pub fn resolve_system(&self, output_format: &OutputFormat, media: &Media) -> Option<&'static str> {
+    /// `None` for `output_format` selects the open (text) instruction.
+    pub fn resolve_system(&self, output_format: Option<&OutputFormat>, media: &Media) -> Option<&'static str> {
         let prompt = match output_format {
-            OutputFormat::Text => self.open_instruction.as_ref(),
-            _ => self.grounded_instruction.as_ref(),
+            None => self.open_instruction.as_ref(),
+            Some(_) => self.grounded_instruction.as_ref(),
         }?;
         Some(prompt.get(media))
     }
