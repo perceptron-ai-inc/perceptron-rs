@@ -16,15 +16,13 @@ static POINT_REGEX: LazyLock<Regex> = LazyLock::new(|| tag_regex("point"));
 static BOX_REGEX: LazyLock<Regex> = LazyLock::new(|| tag_regex("point_box"));
 static POLYGON_REGEX: LazyLock<Regex> = LazyLock::new(|| tag_regex("polygon"));
 static COLLECTION_REGEX: LazyLock<Regex> = LazyLock::new(|| tag_regex("collection"));
-static CLIP_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)<clip\b\s*([^>]*?)\s*/>").expect(REGEX_EXPECT));
+static CLIP_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)<clip\b\s*([^>]*?)\s*/>").expect(REGEX_EXPECT));
 
 static COORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\(\s*(\d+)\s*,\s*(\d+)\s*\)").expect(REGEX_EXPECT));
 
 static MENTION_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"mention="([^"]*)""#).expect(REGEX_EXPECT));
 
-static T_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"\bt=(?:"([^"]*)"|(\S+))"#).expect(REGEX_EXPECT));
+static T_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"\bt=(?:"([^"]*)"|(\S+))"#).expect(REGEX_EXPECT));
 
 fn parse_mention(attr_str: &str) -> Option<String> {
     MENTION_REGEX.captures(attr_str).map(|c| c[1].to_string())
@@ -40,14 +38,8 @@ fn parse_t(attr_str: &str) -> Option<f32> {
 /// Parse the `t` attribute on a `<clip />` tag, which may be a single moment or a range.
 /// Accepts: `t=1.5`, `t="1.5"`, `t="1.5 seconds"`, `t="1.5 2.0"`, `t="1.5 seconds 2.0 seconds"`.
 fn parse_clip_t(attr_str: &str) -> Option<ClipTimestamp> {
-    let value = T_REGEX
-        .captures(attr_str)
-        .and_then(|c| c.get(1).or(c.get(2)))?
-        .as_str();
-    let nums: Vec<f32> = value
-        .split_whitespace()
-        .filter_map(|s| s.parse::<f32>().ok())
-        .collect();
+    let value = T_REGEX.captures(attr_str).and_then(|c| c.get(1).or(c.get(2)))?.as_str();
+    let nums: Vec<f32> = value.split_whitespace().filter_map(|s| s.parse::<f32>().ok()).collect();
     match nums.as_slice() {
         [start] => Some(ClipTimestamp::Moment(*start)),
         [start, end] => Some(ClipTimestamp::Range {
@@ -90,7 +82,12 @@ pub(crate) fn extract(text: &str, format: Option<&OutputFormat>) -> Option<Point
 }
 
 fn parse_point(coords: &[(u32, u32)], mention: Option<String>, timestamp: Option<f32>) -> Option<Point> {
-    coords.first().map(|&(x, y)| Point { x, y, mention, timestamp })
+    coords.first().map(|&(x, y)| Point {
+        x,
+        y,
+        mention,
+        timestamp,
+    })
 }
 
 fn parse_box(coords: &[(u32, u32)], mention: Option<String>, timestamp: Option<f32>) -> Option<BoundingBox> {
@@ -294,14 +291,8 @@ mod tests {
         assert_eq!(clips[0].mention.as_deref(), Some("intro"));
         assert_eq!(clips[0].timestamp, ClipTimestamp::Moment(1.5));
         assert_eq!(clips[1].timestamp, ClipTimestamp::Moment(2.5));
-        assert_eq!(
-            clips[2].timestamp,
-            ClipTimestamp::Range { start: 10.0, end: 20.0 }
-        );
-        assert_eq!(
-            clips[3].timestamp,
-            ClipTimestamp::Range { start: 30.0, end: 45.0 }
-        );
+        assert_eq!(clips[2].timestamp, ClipTimestamp::Range { start: 10.0, end: 20.0 });
+        assert_eq!(clips[3].timestamp, ClipTimestamp::Range { start: 30.0, end: 45.0 });
     }
 
     #[test]

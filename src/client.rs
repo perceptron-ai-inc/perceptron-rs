@@ -198,7 +198,8 @@ impl Perceptron for PerceptronClient {
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
         };
-        self.send_and_extract(build_wire_request(desc), Some(&output_format)).await
+        self.send_and_extract(build_wire_request(desc), Some(&output_format))
+            .await
     }
 
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
