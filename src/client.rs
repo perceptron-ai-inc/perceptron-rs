@@ -189,12 +189,7 @@ impl Perceptron for PerceptronClient {
         if let Some(system) = profile.caption.resolve_system(&request.media) {
             system_prompts.push(system.to_string());
         }
-        let user_text = Some(
-            profile
-                .caption
-                .resolve_user(&request.style, &request.media)
-                .to_string(),
-        );
+        let user_text = Some(profile.caption.resolve_user(&request.style, &request.media).to_string());
         let desc = RequestDescriptor {
             media: request.media,
             system_prompts,

@@ -86,8 +86,7 @@ async fn detailed(#[case] model: &str, #[case] expected_text: &str) {
     )
     .await;
 
-    let request =
-        CaptionRequest::new(model, Image::url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
+    let request = CaptionRequest::new(model, Image::url("https://example.com/img.jpg")).style(CaptionStyle::Detailed);
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }
@@ -208,8 +207,8 @@ async fn point_format() {
     )
     .await;
 
-    let request = CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg"))
-        .output_format(OutputFormat::Point);
+    let request =
+        CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).output_format(OutputFormat::Point);
     let response = client.caption(request).await.unwrap();
 
     assert!(response.content.is_some());

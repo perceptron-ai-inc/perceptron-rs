@@ -339,11 +339,7 @@ async fn video_url_media() {
     )
     .await;
 
-    let request = AnalyzeRequest::new(
-        "test-model",
-        "Describe this",
-        Video::url("https://example.com/vid.mp4"),
-    );
+    let request = AnalyzeRequest::new("test-model", "Describe this", Video::url("https://example.com/vid.mp4"));
     let response = client.analyze(request).await.unwrap();
 
     assert_eq!(response.content, Some("a video of a cat".to_string()));

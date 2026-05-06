@@ -19,19 +19,15 @@ where
 #[test]
 fn analyze_request_all_fields() {
     roundtrip(
-        &AnalyzeRequest::new(
-            "model-v1",
-            "Describe this",
-            Image::url("https://example.com/img.jpg"),
-        )
-        .output_format(OutputFormat::Point)
-        .reasoning(true)
-        .temperature(0.5)
-        .top_p(0.25)
-        .top_k(50)
-        .frequency_penalty(0.5)
-        .presence_penalty(0.125)
-        .max_tokens(100),
+        &AnalyzeRequest::new("model-v1", "Describe this", Image::url("https://example.com/img.jpg"))
+            .output_format(OutputFormat::Point)
+            .reasoning(true)
+            .temperature(0.5)
+            .top_p(0.25)
+            .top_k(50)
+            .frequency_penalty(0.5)
+            .presence_penalty(0.125)
+            .max_tokens(100),
         json!({
             "message": "Describe this",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
@@ -134,19 +130,15 @@ fn detect_request_all_fields() {
 #[test]
 fn question_request_all_fields() {
     roundtrip(
-        &QuestionRequest::new(
-            "model-v1",
-            "What is this?",
-            Image::url("https://example.com/img.jpg"),
-        )
-        .output_format(OutputFormat::Point)
-        .reasoning(true)
-        .temperature(0.5)
-        .top_p(0.25)
-        .top_k(50)
-        .frequency_penalty(0.5)
-        .presence_penalty(0.125)
-        .max_tokens(100),
+        &QuestionRequest::new("model-v1", "What is this?", Image::url("https://example.com/img.jpg"))
+            .output_format(OutputFormat::Point)
+            .reasoning(true)
+            .temperature(0.5)
+            .top_p(0.25)
+            .top_k(50)
+            .frequency_penalty(0.5)
+            .presence_penalty(0.125)
+            .max_tokens(100),
         json!({
             "question": "What is this?",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
