@@ -11,7 +11,7 @@ pub struct Point {
     /// Optional label.
     pub mention: Option<String>,
     /// Optional timestamp in seconds (for video annotations).
-    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<f32>,
 }
 
@@ -30,7 +30,7 @@ pub struct BoundingBox {
     /// Optional label.
     pub mention: Option<String>,
     /// Optional timestamp in seconds (for video annotations).
-    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<f32>,
 }
 
@@ -43,7 +43,7 @@ pub struct Polygon {
     /// Optional label.
     pub mention: Option<String>,
     /// Optional timestamp in seconds (for video annotations).
-    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<f32>,
 }
 
