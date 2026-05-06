@@ -163,11 +163,11 @@ const ISAAC: PromptProfile = PromptProfile {
     detect: DetectPromptTemplate {
         general: ModalityPrompt {
             image: "Your goal is to segment out the objects in the scene",
-            video: "Your goal is to segment out the objects in the scene",
+            video: "Your goal is to segment out the objects in the scene. Make sure to track the objects.",
         },
         category_template: ModalityPrompt {
             image: "Your goal is to segment out the following categories: {categories}",
-            video: "Your goal is to segment out the following categories: {categories}",
+            video: "Your goal is to segment out the following categories: {categories}. Make sure to track the objects.",
         },
     },
 };
