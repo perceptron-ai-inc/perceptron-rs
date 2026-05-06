@@ -26,16 +26,6 @@ static MENTION_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"mention="
 static T_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"\bt=(?:"([^"]*)"|(\S+))"#).expect(REGEX_EXPECT));
 
-/// Return the compiled regex for the target tag type.
-fn item_regex(format: &OutputFormat) -> &'static Regex {
-    match format {
-        OutputFormat::Point => &POINT_REGEX,
-        OutputFormat::Box => &BOX_REGEX,
-        OutputFormat::Polygon => &POLYGON_REGEX,
-        OutputFormat::Clip => unreachable!(),
-    }
-}
-
 fn parse_mention(attr_str: &str) -> Option<String> {
     MENTION_REGEX.captures(attr_str).map(|c| c[1].to_string())
 }
@@ -85,9 +75,9 @@ pub(crate) fn extract(text: &str, format: Option<&OutputFormat>) -> Option<Point
     let format = format?;
     let mut pointing = Pointing::default();
     match format {
-        OutputFormat::Point => pointing.points = extract_items(text, item_regex(format), parse_point),
-        OutputFormat::Box => pointing.boxes = extract_items(text, item_regex(format), parse_box),
-        OutputFormat::Polygon => pointing.polygons = extract_items(text, item_regex(format), parse_polygon),
+        OutputFormat::Point => pointing.points = extract_items(text, &POINT_REGEX, parse_point),
+        OutputFormat::Box => pointing.boxes = extract_items(text, &BOX_REGEX, parse_box),
+        OutputFormat::Polygon => pointing.polygons = extract_items(text, &POLYGON_REGEX, parse_polygon),
         OutputFormat::Clip => pointing.clips = extract_clips(text),
     }
     // Omit pointing entirely when nothing was extracted, following the API
