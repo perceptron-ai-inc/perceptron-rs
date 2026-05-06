@@ -165,12 +165,7 @@ fn model_all_fields() {
             name: "Isaac".to_string(),
             description: Some("A vision model".to_string()),
             modalities: vec![Modality::Image],
-            output_formats: vec![
-                OutputFormat::Text,
-                OutputFormat::Point,
-                OutputFormat::Box,
-                OutputFormat::Polygon,
-            ],
+            output_formats: vec![OutputFormat::Point, OutputFormat::Box, OutputFormat::Polygon],
             sampling_parameters: vec![SamplingParameter::Temperature, SamplingParameter::TopP],
             max_context_tokens: 128000,
             max_output_tokens: 4096,
@@ -180,7 +175,7 @@ fn model_all_fields() {
             "name": "Isaac",
             "description": "A vision model",
             "modalities": ["image"],
-            "output_formats": ["text", "point", "box", "polygon"],
+            "output_formats": ["point", "box", "polygon"],
             "sampling_parameters": ["temperature", "top_p"],
             "max_context_tokens": 128000,
             "max_output_tokens": 4096
@@ -212,6 +207,7 @@ fn pointing_response() {
                     x: 50,
                     y: 60,
                     mention: Some("cat".to_string()),
+                    timestamp: None,
                 }],
                 ..Default::default()
             }),

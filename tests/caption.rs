@@ -22,6 +22,7 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
                 x2: 300,
                 y2: 400,
                 mention: Some("cat".to_string()),
+                timestamp: None,
             }],
             ..Default::default()
         })
@@ -133,14 +134,16 @@ async fn multiple_boxes() {
                     y1: 20,
                     x2: 100,
                     y2: 200,
-                    mention: Some("cat".to_string())
+                    mention: Some("cat".to_string()),
+                    timestamp: None,
                 },
                 BoundingBox {
                     x1: 300,
                     y1: 50,
                     x2: 500,
                     y2: 400,
-                    mention: Some("dog".to_string())
+                    mention: Some("dog".to_string()),
+                    timestamp: None,
                 },
             ],
             ..Default::default()
@@ -219,6 +222,7 @@ async fn point_format() {
                 x: 150,
                 y: 250,
                 mention: Some("cat".to_string()),
+                timestamp: None,
             }],
             ..Default::default()
         })

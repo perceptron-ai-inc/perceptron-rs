@@ -65,7 +65,7 @@ impl PerceptronClient {
     async fn send_and_extract(
         &self,
         wire_request: CreateChatCompletionRequest,
-        output_format: &OutputFormat,
+        output_format: Option<&OutputFormat>,
     ) -> Result<PointingResponse, PerceptronError> {
         let completion = self.api.chat_completions(wire_request).await?;
 
@@ -138,12 +138,10 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn question(&self, request: QuestionRequest) -> Result<PointingResponse, PerceptronError> {
-        let output_format = request.output_format.unwrap_or(OutputFormat::Text);
+        let output_format = request.output_format.as_ref();
         let profile = prompting::resolve_prompt_profile(&request.model);
-        let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
-            .into_iter()
-            .collect();
-        if let Some(system) = profile.question.resolve_system(&output_format, &request.media) {
+        let mut system_prompts: Vec<String> = system_hint(output_format, request.reasoning).into_iter().collect();
+        if let Some(system) = profile.question.resolve_system(output_format, &request.media) {
             system_prompts.push(system.to_string());
         }
         let desc = RequestDescriptor {
@@ -158,16 +156,14 @@ impl Perceptron for PerceptronClient {
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
         };
-        self.send_and_extract(build_wire_request(desc), &output_format).await
+        self.send_and_extract(build_wire_request(desc), output_format).await
     }
 
     async fn analyze(&self, request: AnalyzeRequest) -> Result<PointingResponse, PerceptronError> {
-        let output_format = request.output_format.unwrap_or(OutputFormat::Text);
+        let output_format = request.output_format.as_ref();
         let desc = RequestDescriptor {
             media: request.media,
-            system_prompts: system_hint(Some(&output_format), request.reasoning)
-                .into_iter()
-                .collect(),
+            system_prompts: system_hint(output_format, request.reasoning).into_iter().collect(),
             user_text: Some(request.message),
             model: request.model,
             max_tokens: request.max_tokens,
@@ -177,7 +173,7 @@ impl Perceptron for PerceptronClient {
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
         };
-        self.send_and_extract(build_wire_request(desc), &output_format).await
+        self.send_and_extract(build_wire_request(desc), output_format).await
     }
 
     async fn caption(&self, request: CaptionRequest) -> Result<PointingResponse, PerceptronError> {
@@ -202,7 +198,7 @@ impl Perceptron for PerceptronClient {
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
         };
-        self.send_and_extract(build_wire_request(desc), &output_format).await
+        self.send_and_extract(build_wire_request(desc), Some(&output_format)).await
     }
 
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
@@ -251,7 +247,7 @@ impl Perceptron for PerceptronClient {
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
         };
-        self.send_and_extract(build_wire_request(desc), &OutputFormat::Box)
+        self.send_and_extract(build_wire_request(desc), Some(&OutputFormat::Box))
             .await
     }
 }
@@ -264,6 +260,7 @@ fn system_hint(output_format: Option<&OutputFormat>, enable_reasoning: Option<bo
         Some(OutputFormat::Point) => components.push("POINT"),
         Some(OutputFormat::Box) => components.push("BOX"),
         Some(OutputFormat::Polygon) => components.push("POLYGON"),
+        Some(OutputFormat::Clip) => components.push("CLIP"),
         _ => {}
     }
 

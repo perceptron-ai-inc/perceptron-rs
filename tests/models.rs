@@ -11,7 +11,7 @@ fn sample_model(id: &str, name: &str) -> serde_json::Value {
         "name": name,
         "description": "A vision model for image understanding",
         "modalities": ["image"],
-        "output_formats": ["text", "point", "box", "polygon"],
+        "output_formats": ["point", "box", "polygon"],
         "sampling_parameters": ["temperature", "top_p", "top_k", "frequency_penalty", "presence_penalty"],
         "max_context_tokens": 128000,
         "max_output_tokens": 4096
@@ -28,12 +28,7 @@ fn assert_model(model: &Model, expected_id: &str, expected_name: &str) {
     assert_eq!(model.modalities, vec![Modality::Image]);
     assert_eq!(
         model.output_formats,
-        vec![
-            OutputFormat::Text,
-            OutputFormat::Point,
-            OutputFormat::Box,
-            OutputFormat::Polygon
-        ]
+        vec![OutputFormat::Point, OutputFormat::Box, OutputFormat::Polygon]
     );
     assert_eq!(
         model.sampling_parameters,

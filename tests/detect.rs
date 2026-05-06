@@ -20,6 +20,7 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
                 x2: 100,
                 y2: 200,
                 mention: Some("cat".to_string()),
+                timestamp: None,
             }],
             ..Default::default()
         })
@@ -93,6 +94,7 @@ async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
                     x2: 100,
                     y2: 200,
                     mention: Some("cat".to_string()),
+                    timestamp: None,
                 },
                 BoundingBox {
                     x1: 300,
@@ -100,6 +102,7 @@ async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
                     x2: 500,
                     y2: 600,
                     mention: Some("dog".to_string()),
+                    timestamp: None,
                 },
             ],
             ..Default::default()
@@ -129,21 +132,24 @@ async fn multiple_detections() {
                     y1: 30,
                     x2: 200,
                     y2: 500,
-                    mention: Some("person".to_string())
+                    mention: Some("person".to_string()),
+                    timestamp: None,
                 },
                 BoundingBox {
                     x1: 400,
                     y1: 200,
                     x2: 700,
                     y2: 450,
-                    mention: Some("car".to_string())
+                    mention: Some("car".to_string()),
+                    timestamp: None,
                 },
                 BoundingBox {
                     x1: 750,
                     y1: 50,
                     x2: 900,
                     y2: 500,
-                    mention: Some("tree".to_string())
+                    mention: Some("tree".to_string()),
+                    timestamp: None,
                 },
             ],
             ..Default::default()
@@ -173,14 +179,16 @@ async fn collection() {
                     y1: 20,
                     x2: 100,
                     y2: 200,
-                    mention: Some("cat".to_string())
+                    mention: Some("cat".to_string()),
+                    timestamp: None,
                 },
                 BoundingBox {
                     x1: 300,
                     y1: 50,
                     x2: 500,
                     y2: 400,
-                    mention: Some("cat".to_string())
+                    mention: Some("cat".to_string()),
+                    timestamp: None,
                 },
             ],
             ..Default::default()
