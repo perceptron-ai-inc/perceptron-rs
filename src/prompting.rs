@@ -167,4 +167,3 @@ pub const ISAAC: PromptProfile = PromptProfile {
         },
     },
 };
-
