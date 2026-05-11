@@ -29,10 +29,6 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
 
 #[rstest]
 #[case::isaac("isaac-test", "Your goal is to segment out the objects in the scene")]
-#[case::qwen(
-    "qwen3-vl-72b",
-    "Locate every object of interest and report bounding box coordinates in JSON format."
-)]
 #[case::unknown_defaults_to_isaac("unknown-model", "Your goal is to segment out the objects in the scene")]
 #[tokio::test]
 async fn general_detection(#[case] model: &str, #[case] expected_system: &str) {
@@ -60,10 +56,6 @@ async fn general_detection(#[case] model: &str, #[case] expected_system: &str) {
 
 #[rstest]
 #[case::isaac("isaac-test", "Your goal is to segment out the following categories: cat, dog")]
-#[case::qwen(
-    "qwen3-vl-72b",
-    "Locate every instance that belongs to the following categories: \"cat, dog\". Report bbox coordinates in JSON format."
-)]
 #[tokio::test]
 async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
     let (server, client) = common::setup().await;

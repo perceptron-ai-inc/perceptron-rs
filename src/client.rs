@@ -139,7 +139,7 @@ impl Perceptron for PerceptronClient {
 
     async fn question(&self, request: QuestionRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.as_ref();
-        let profile = prompting::resolve_prompt_profile(&request.model);
+        let profile = &prompting::ISAAC;
         let mut system_prompts: Vec<String> = system_hint(output_format, request.reasoning).into_iter().collect();
         if let Some(system) = profile.question.resolve_system(output_format, &request.media) {
             system_prompts.push(system.to_string());
@@ -178,7 +178,7 @@ impl Perceptron for PerceptronClient {
 
     async fn caption(&self, request: CaptionRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.unwrap_or(OutputFormat::Box);
-        let profile = prompting::resolve_prompt_profile(&request.model);
+        let profile = &prompting::ISAAC;
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()
             .collect();
@@ -203,7 +203,7 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
-        let profile = prompting::resolve_prompt_profile(&request.model);
+        let profile = &prompting::ISAAC;
         let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
         if let Some(system) = profile.ocr.resolve_system() {
             system_prompts.push(system.to_string());
@@ -227,7 +227,7 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn detect(&self, request: DetectRequest) -> Result<PointingResponse, PerceptronError> {
-        let profile = prompting::resolve_prompt_profile(&request.model);
+        let profile = &prompting::ISAAC;
         let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
             .into_iter()
             .collect();

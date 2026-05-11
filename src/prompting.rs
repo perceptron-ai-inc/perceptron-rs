@@ -131,11 +131,7 @@ pub struct PromptProfile {
     pub detect: DetectPromptTemplate,
 }
 
-// ---------------------------------------------------------------------------
-// Built-in profiles
-// ---------------------------------------------------------------------------
-
-const ISAAC: PromptProfile = PromptProfile {
+pub const ISAAC: PromptProfile = PromptProfile {
     question: QuestionPromptTemplate {
         open_instruction: None,
         grounded_instruction: None,
@@ -171,48 +167,3 @@ const ISAAC: PromptProfile = PromptProfile {
         },
     },
 };
-
-const QWEN: PromptProfile = PromptProfile {
-    question: QuestionPromptTemplate {
-        open_instruction: None,
-        grounded_instruction: Some(ModalityPrompt {
-            image: "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format.",
-            video: "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format.",
-        }),
-    },
-    caption: CaptionPromptTemplate {
-        system: None,
-        concise: ModalityPrompt {
-            image: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",
-            video: "Describe the primary subjects, their actions, and visible context in one vivid sentence.",
-        },
-        detailed: ModalityPrompt {
-            image: "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the image.",
-            video: "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the video.",
-        },
-    },
-    ocr: OcrPromptTemplate {
-        system: None,
-        plain: Some("Read all the text in the image."),
-        markdown: "qwenvl markdown",
-        html: "qwenvl html",
-    },
-    detect: DetectPromptTemplate {
-        general: ModalityPrompt {
-            image: "Locate every object of interest and report bounding box coordinates in JSON format.",
-            video: "Locate every object of interest and report bounding box coordinates in JSON format.",
-        },
-        category_template: ModalityPrompt {
-            image: "Locate every instance that belongs to the following categories: \"{categories}\". Report bbox coordinates in JSON format.",
-            video: "Locate every instance that belongs to the following categories: \"{categories}\". Report bbox coordinates in JSON format.",
-        },
-    },
-};
-
-/// Resolve the prompt profile for a given model name based on its prefix.
-///
-/// Defaults to Isaac if no specific profile matches.
-pub fn resolve_prompt_profile(model: &str) -> &'static PromptProfile {
-    let m = model.to_lowercase();
-    if m.starts_with("qwen") { &QWEN } else { &ISAAC }
-}
