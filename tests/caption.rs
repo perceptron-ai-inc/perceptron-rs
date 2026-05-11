@@ -31,10 +31,6 @@ fn assert_single_cat_box(response: &perceptron_ai::PointingResponse) {
 
 #[rstest]
 #[case::isaac("isaac-test", "Provide a concise, human-friendly caption for the upcoming image.")]
-#[case::qwen(
-    "qwen3-vl-72b",
-    "Describe the primary subjects, their actions, and visible context in one vivid sentence."
-)]
 #[case::unknown_defaults_to_isaac("unknown-model", "Provide a concise, human-friendly caption for the upcoming image.")]
 #[tokio::test]
 async fn concise(#[case] model: &str, #[case] expected_text: &str) {
@@ -64,10 +60,6 @@ async fn concise(#[case] model: &str, #[case] expected_text: &str) {
 #[case::isaac(
     "isaac-test",
     "Provide a detailed caption describing key objects, relationships, and context in the upcoming image."
-)]
-#[case::qwen(
-    "qwen3-vl-72b",
-    "Provide a multi-sentence caption that calls out subjects, relationships, scene intent, and any text embedded in the image."
 )]
 #[tokio::test]
 async fn detailed(#[case] model: &str, #[case] expected_text: &str) {

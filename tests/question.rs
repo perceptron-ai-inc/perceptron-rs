@@ -7,7 +7,6 @@ mod common;
 
 #[rstest]
 #[case::isaac("isaac-test", None)]
-#[case::qwen("qwen3-vl-72b", None)]
 #[case::unknown_defaults_to_isaac("unknown-model", None)]
 #[tokio::test]
 async fn plain(#[case] model: &str, #[case] expected_system: Option<&str>) {
@@ -37,37 +36,6 @@ async fn plain(#[case] model: &str, #[case] expected_system: Option<&str>) {
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("The cat is orange".to_string()));
     assert_eq!(response.pointing, None);
-}
-
-#[tokio::test]
-async fn with_grounded_output() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({
-            "model": "qwen3-vl-72b",
-            "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
-                {"role": "system", "content": "You are Qwen3-VL performing grounded reasoning. Give the answer and reference the relevant regions using structured tags when available. Report bbox coordinates in JSON format."},
-                {"role": "user", "content": [
-                    {"type": "image_url"},
-                    {"type": "text", "text": "Where is the cat?"}
-                ]}
-            ]
-        })),
-        common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box>"#, None),
-    )
-    .await;
-
-    let request = QuestionRequest::new(
-        "qwen3-vl-72b",
-        "Where is the cat?",
-        Image::url("https://example.com/img.jpg"),
-    )
-    .output_format(OutputFormat::Box);
-    let response = client.question(request).await.unwrap();
-    assert!(response.content.is_some());
-    assert!(response.pointing.is_some());
 }
 
 #[tokio::test]

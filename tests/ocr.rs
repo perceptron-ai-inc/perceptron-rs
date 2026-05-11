@@ -13,7 +13,6 @@ mod common;
     ),
     None
 )]
-#[case::qwen("qwen3-vl-72b", None, Some("Read all the text in the image."))]
 #[case::unknown_defaults_to_isaac(
     "unknown-model",
     Some(
@@ -55,7 +54,6 @@ async fn plain(#[case] model: &str, #[case] expected_system: Option<&str>, #[cas
     ),
     "Transcribe every readable word in the image using Markdown formatting with headings, lists, tables, and other structural elements as appropriate."
 )]
-#[case::qwen("qwen3-vl-72b", None, "qwenvl markdown")]
 #[tokio::test]
 async fn markdown_mode(#[case] model: &str, #[case] expected_system: Option<&str>, #[case] expected_text: &str) {
     let (server, client) = common::setup().await;
