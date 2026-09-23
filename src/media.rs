@@ -10,6 +10,8 @@ pub enum Modality {
     Image,
     /// Video input.
     Video,
+    /// Audio input.
+    Audio,
 }
 
 /// Image encoding format.
@@ -49,6 +51,31 @@ impl VideoFormat {
     /// Returns the MIME type string (e.g. `"video/mp4"`).
     pub fn mime(&self) -> String {
         format!("video/{}", self)
+    }
+}
+
+/// Audio encoding format.
+#[derive(Debug, Clone, Copy, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
+#[strum(serialize_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+pub enum AudioFormat {
+    /// WAV audio.
+    Wav,
+    /// MP3 audio.
+    Mp3,
+    /// FLAC audio.
+    Flac,
+}
+
+impl AudioFormat {
+    /// Returns the MIME type string (e.g. `"audio/wav"`).
+    pub fn mime(&self) -> String {
+        match self {
+            AudioFormat::Wav => "audio/wav".to_string(),
+            AudioFormat::Mp3 => "audio/mpeg".to_string(),
+            AudioFormat::Flac => "audio/flac".to_string(),
+        }
     }
 }
 
@@ -148,7 +175,44 @@ impl Video {
     }
 }
 
-/// Media for endpoints that accept either an image or a video.
+/// Audio input — either a URL or base64-encoded data.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+pub enum Audio {
+    /// A URL pointing to an audio file.
+    Url {
+        /// The source URL.
+        src: String,
+    },
+    /// Base64-encoded audio data.
+    Base64 {
+        /// The audio format.
+        format: AudioFormat,
+        /// The base64-encoded data.
+        data: String,
+    },
+}
+
+impl Audio {
+    /// Create from a URL.
+    pub fn url(url: impl Into<String>) -> Self {
+        Audio::Url { src: url.into() }
+    }
+
+    /// Create from base64-encoded data.
+    ///
+    /// For data larger than ~1MB, prefer [`Self::url`]; large base64 payloads can hit
+    /// request-size limits and increase request latency.
+    pub fn base64(format: AudioFormat, data: impl Into<String>) -> Self {
+        Audio::Base64 {
+            format,
+            data: data.into(),
+        }
+    }
+}
+
+/// Media for endpoints that accept an image, a video, or an audio clip.
 ///
 /// The SDK does not validate that the media's modality matches the target model's
 /// supported modalities; mismatches surface as a server-side error.
@@ -160,6 +224,14 @@ pub enum Media {
     Image(Image),
     /// Video input.
     Video(Video),
+    /// Audio input.
+    Audio(Audio),
+}
+
+impl From<Audio> for Media {
+    fn from(audio: Audio) -> Self {
+        Media::Audio(audio)
+    }
 }
 
 impl From<Image> for Media {
@@ -225,5 +297,26 @@ mod tests {
     fn media_from_video() {
         let media: Media = Video::url("https://example.com/vid.mp4").into();
         assert!(matches!(media, Media::Video(_)));
+    }
+
+    #[test]
+    fn audio_format_mime() {
+        assert_eq!(AudioFormat::Wav.mime(), "audio/wav");
+        assert_eq!(AudioFormat::Mp3.mime(), "audio/mpeg");
+        assert_eq!(AudioFormat::Flac.mime(), "audio/flac");
+    }
+
+    #[test]
+    fn media_from_audio() {
+        let media: Media = Audio::url("https://example.com/clip.wav").into();
+        assert!(matches!(media, Media::Audio(Audio::Url { .. })));
+        let media: Media = Audio::base64(AudioFormat::Flac, "abc").into();
+        assert!(matches!(
+            media,
+            Media::Audio(Audio::Base64 {
+                format: AudioFormat::Flac,
+                ..
+            })
+        ));
     }
 }

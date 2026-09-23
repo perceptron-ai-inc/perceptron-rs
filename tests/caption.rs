@@ -1,5 +1,6 @@
 use perceptron_ai::{
-    BoundingBox, CaptionRequest, CaptionStyle, Image, ImageFormat, OutputFormat, Perceptron, Point, Pointing, Video,
+    Audio, BoundingBox, CaptionRequest, CaptionStyle, Image, ImageFormat, OutputFormat, Perceptron, Point, Pointing,
+    Video,
 };
 use rstest::rstest;
 use serde_json::json;
@@ -219,4 +220,27 @@ async fn point_format() {
             ..Default::default()
         })
     );
+}
+
+#[tokio::test]
+async fn audio_modality_substitutes_prompt() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [
+                {"role": "system", "content": "<hint>BOX</hint>"},
+                {"role": "user", "content": [
+                    {"type": "audio_url", "audio_url": {"url": "https://example.com/clip.wav"}},
+                    {"type": "text", "text": "Provide a concise, human-friendly description of the upcoming audio."}
+                ]}
+            ]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = CaptionRequest::new("isaac-test", Audio::url("https://example.com/clip.wav"));
+    let response = client.caption(request).await.unwrap();
+    assert_single_cat_box(&response);
 }

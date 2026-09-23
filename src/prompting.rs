@@ -8,6 +8,8 @@ pub struct ModalityPrompt {
     image: &'static str,
     /// Text used when the request media is a video.
     video: &'static str,
+    /// Text used when the request media is audio.
+    audio: &'static str,
 }
 
 impl ModalityPrompt {
@@ -16,6 +18,7 @@ impl ModalityPrompt {
         match media {
             Media::Image(_) => self.image,
             Media::Video(_) => self.video,
+            Media::Audio(_) => self.audio,
         }
     }
 }
@@ -141,10 +144,12 @@ pub const ISAAC: PromptProfile = PromptProfile {
         concise: ModalityPrompt {
             image: "Provide a concise, human-friendly caption for the upcoming image.",
             video: "Provide a concise, human-friendly caption for the upcoming video.",
+            audio: "Provide a concise, human-friendly description of the upcoming audio.",
         },
         detailed: ModalityPrompt {
             image: "Provide a detailed caption describing key objects, relationships, and context in the upcoming image.",
             video: "Provide a detailed caption describing key objects, relationships, and context in the upcoming video.",
+            audio: "Provide a detailed description of the upcoming audio: speech content, speakers, sounds, and context.",
         },
     },
     ocr: OcrPromptTemplate {
@@ -160,10 +165,12 @@ pub const ISAAC: PromptProfile = PromptProfile {
         general: ModalityPrompt {
             image: "Your goal is to segment out the objects in the scene",
             video: "Your goal is to segment out the objects in the scene. Make sure to track the objects.",
+            audio: "Your goal is to segment out the objects in the scene",
         },
         category_template: ModalityPrompt {
             image: "Your goal is to segment out the following categories: {categories}",
             video: "Your goal is to segment out the following categories: {categories}. Make sure to track the objects.",
+            audio: "Your goal is to segment out the following categories: {categories}",
         },
     },
 };

@@ -9,6 +9,8 @@ use crate::pointing::Pointing;
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum OutputFormat {
+    /// Return plain text with no spatial annotation.
+    Text,
     /// Return point coordinates as `<point>` tags for spatial annotation.
     Point,
     /// Return bounding box coordinates as `<point_box>` tags for spatial annotation.
@@ -103,6 +105,8 @@ pub struct QuestionRequest {
     pub question: String,
     /// Media to ask about.
     pub media: Media,
+    /// Whether to analyze the audio track of a video.
+    pub enable_audio_in_video: Option<bool>,
     /// Output format for the response.
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
@@ -129,6 +133,7 @@ impl QuestionRequest {
         Self {
             question: question.into(),
             media: media.into(),
+            enable_audio_in_video: None,
             output_format: None,
             model: model.into(),
             reasoning: None,
@@ -147,6 +152,12 @@ impl QuestionRequest {
         self
     }
 
+    /// Enable analysis of a video's audio track.
+    pub fn enable_audio_in_video(mut self, enable: bool) -> Self {
+        self.enable_audio_in_video = Some(enable);
+        self
+    }
+
     generation_param_setters!();
 }
 
@@ -161,6 +172,8 @@ pub struct AnalyzeRequest {
     pub message: String,
     /// Media to analyze.
     pub media: Media,
+    /// Whether to analyze the audio track of a video.
+    pub enable_audio_in_video: Option<bool>,
     /// Output format for the response.
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
@@ -187,6 +200,7 @@ impl AnalyzeRequest {
         Self {
             message: message.into(),
             media: media.into(),
+            enable_audio_in_video: None,
             output_format: None,
             model: model.into(),
             reasoning: None,
@@ -205,6 +219,12 @@ impl AnalyzeRequest {
         self
     }
 
+    /// Enable analysis of a video's audio track.
+    pub fn enable_audio_in_video(mut self, enable: bool) -> Self {
+        self.enable_audio_in_video = Some(enable);
+        self
+    }
+
     generation_param_setters!();
 }
 
@@ -217,6 +237,8 @@ impl AnalyzeRequest {
 pub struct CaptionRequest {
     /// Media to caption.
     pub media: Media,
+    /// Whether to analyze the audio track of a video.
+    pub enable_audio_in_video: Option<bool>,
     /// Caption style.
     pub style: CaptionStyle,
     /// Output format for the response (defaults to Box).
@@ -244,6 +266,7 @@ impl CaptionRequest {
     pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             media: media.into(),
+            enable_audio_in_video: None,
             style: CaptionStyle::default(),
             output_format: None,
             model: model.into(),
@@ -266,6 +289,12 @@ impl CaptionRequest {
     /// Set the output format.
     pub fn output_format(mut self, format: OutputFormat) -> Self {
         self.output_format = Some(format);
+        self
+    }
+
+    /// Enable analysis of a video's audio track.
+    pub fn enable_audio_in_video(mut self, enable: bool) -> Self {
+        self.enable_audio_in_video = Some(enable);
         self
     }
 

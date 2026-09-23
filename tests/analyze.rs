@@ -1,5 +1,5 @@
 use perceptron_ai::{
-    AnalyzeRequest, BoundingBox, Image, ImageFormat, OutputFormat, Perceptron, Point, Pointing, Polygon, Video,
+    AnalyzeRequest, Audio, BoundingBox, Image, ImageFormat, OutputFormat, Perceptron, Point, Pointing, Polygon, Video,
 };
 use serde_json::json;
 use wiremock::matchers::{body_partial_json, method, path};
@@ -402,4 +402,31 @@ async fn all_generation_params() {
             ..Default::default()
         })
     );
+}
+
+#[tokio::test]
+async fn audio_url_media() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {"type": "audio_url", "audio_url": {"url": "https://example.com/clip.flac"}}
+                ]
+            }]
+        })),
+        common::response("a recording of birdsong", None),
+    )
+    .await;
+
+    let request = AnalyzeRequest::new(
+        "test-model",
+        "Describe this",
+        Audio::url("https://example.com/clip.flac"),
+    );
+    let response = client.analyze(request).await.unwrap();
+
+    assert_eq!(response.content, Some("a recording of birdsong".to_string()));
 }

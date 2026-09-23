@@ -21,6 +21,7 @@ fn analyze_request_all_fields() {
     roundtrip(
         &AnalyzeRequest::new("model-v1", "Describe this", Image::url("https://example.com/img.jpg"))
             .output_format(OutputFormat::Point)
+            .enable_audio_in_video(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -31,6 +32,7 @@ fn analyze_request_all_fields() {
         json!({
             "message": "Describe this",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
+            "enable_audio_in_video": true,
             "output_format": "point",
             "model": "model-v1",
             "reasoning": true,
@@ -50,6 +52,7 @@ fn caption_request_all_fields() {
         &CaptionRequest::new("model-v1", Image::base64(ImageFormat::Jpeg, "data"))
             .style(CaptionStyle::Detailed)
             .output_format(OutputFormat::Box)
+            .enable_audio_in_video(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -59,6 +62,7 @@ fn caption_request_all_fields() {
             .max_tokens(100),
         json!({
             "media": {"modality": "image", "type": "base64", "format": "jpeg", "data": "data"},
+            "enable_audio_in_video": true,
             "style": "detailed",
             "output_format": "box",
             "model": "model-v1",
@@ -132,6 +136,7 @@ fn question_request_all_fields() {
     roundtrip(
         &QuestionRequest::new("model-v1", "What is this?", Image::url("https://example.com/img.jpg"))
             .output_format(OutputFormat::Point)
+            .enable_audio_in_video(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -142,6 +147,7 @@ fn question_request_all_fields() {
         json!({
             "question": "What is this?",
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
+            "enable_audio_in_video": true,
             "output_format": "point",
             "model": "model-v1",
             "reasoning": true,
@@ -164,8 +170,13 @@ fn model_all_fields() {
             id: "isaac-0.1".to_string(),
             name: "Isaac".to_string(),
             description: Some("A vision model".to_string()),
-            modalities: vec![Modality::Image],
-            output_formats: vec![OutputFormat::Point, OutputFormat::Box, OutputFormat::Polygon],
+            modalities: vec![Modality::Image, Modality::Video, Modality::Audio],
+            output_formats: vec![
+                OutputFormat::Text,
+                OutputFormat::Point,
+                OutputFormat::Box,
+                OutputFormat::Polygon,
+            ],
             sampling_parameters: vec![SamplingParameter::Temperature, SamplingParameter::TopP],
             max_context_tokens: 128000,
             max_output_tokens: 4096,
@@ -174,8 +185,8 @@ fn model_all_fields() {
             "id": "isaac-0.1",
             "name": "Isaac",
             "description": "A vision model",
-            "modalities": ["image"],
-            "output_formats": ["point", "box", "polygon"],
+            "modalities": ["image", "video", "audio"],
+            "output_formats": ["text", "point", "box", "polygon"],
             "sampling_parameters": ["temperature", "top_p"],
             "max_context_tokens": 128000,
             "max_output_tokens": 4096

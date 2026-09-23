@@ -67,6 +67,7 @@ pub(crate) fn extract(text: &str, format: Option<&OutputFormat>) -> Option<Point
     let format = format?;
     let mut pointing = Pointing::default();
     match format {
+        OutputFormat::Text => return None,
         OutputFormat::Point => pointing.points = extract_items(text, &POINT_REGEX, parse_point),
         OutputFormat::Box => pointing.boxes = extract_items(text, &BOX_REGEX, parse_box),
         OutputFormat::Polygon => pointing.polygons = extract_items(text, &POLYGON_REGEX, parse_polygon),
