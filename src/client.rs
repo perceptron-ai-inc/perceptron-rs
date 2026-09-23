@@ -3,7 +3,7 @@ use reqwest::Client;
 use crate::api::ApiClient;
 use crate::api::chat_completions::*;
 use crate::error::PerceptronError;
-use crate::media::{Audio, Media};
+use crate::media::Media;
 use crate::models::Model;
 use crate::parsing;
 use crate::prompting;
@@ -311,17 +311,9 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
         Media::Video(video) => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
             video_url: VideoUrl { url: video.to_url() },
         }),
-        Media::Audio(Audio::Url { src }) => ChatCompletionContentPart::AudioUrl(ChatCompletionContentPartAudio {
-            audio_url: AudioUrl { url: src },
+        Media::Audio(audio) => ChatCompletionContentPart::AudioUrl(ChatCompletionContentPartAudio {
+            audio_url: AudioUrl { url: audio.to_url() },
         }),
-        Media::Audio(Audio::Base64 { format, data }) => {
-            ChatCompletionContentPart::InputAudio(ChatCompletionContentPartInputAudio {
-                input_audio: InputAudio {
-                    data,
-                    format: format.to_string(),
-                },
-            })
-        }
     };
     let mut user_parts = vec![media_part];
 
