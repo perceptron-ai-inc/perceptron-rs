@@ -50,6 +50,14 @@ pub enum OcrMode {
 /// Generate generation parameter setter methods on a request struct.
 macro_rules! generation_param_setters {
     () => {
+        /// Let the model zoom into image regions and re-examine them for fine-grained answers.
+        ///
+        /// Focus is an image-only feature. It adds tool-call rounds, so expect higher latency.
+        pub fn focus(mut self, enable: bool) -> Self {
+            self.focus = Some(enable);
+            self
+        }
+
         /// Enable chain-of-thought reasoning.
         pub fn reasoning(mut self, enable: bool) -> Self {
             self.reasoning = Some(enable);
@@ -111,6 +119,8 @@ pub struct QuestionRequest {
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
+    /// Whether to let the model zoom into image regions for fine-grained answers.
+    pub focus: Option<bool>,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
@@ -136,6 +146,7 @@ impl QuestionRequest {
             enable_audio_in_video: None,
             output_format: None,
             model: model.into(),
+            focus: None,
             reasoning: None,
             temperature: None,
             top_p: None,
@@ -178,6 +189,8 @@ pub struct AnalyzeRequest {
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
+    /// Whether to let the model zoom into image regions for fine-grained answers.
+    pub focus: Option<bool>,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
@@ -203,6 +216,7 @@ impl AnalyzeRequest {
             enable_audio_in_video: None,
             output_format: None,
             model: model.into(),
+            focus: None,
             reasoning: None,
             temperature: None,
             top_p: None,
@@ -245,6 +259,8 @@ pub struct CaptionRequest {
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
+    /// Whether to let the model zoom into image regions for fine-grained answers.
+    pub focus: Option<bool>,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
@@ -270,6 +286,7 @@ impl CaptionRequest {
             style: CaptionStyle::default(),
             output_format: None,
             model: model.into(),
+            focus: None,
             reasoning: None,
             temperature: None,
             top_p: None,
@@ -317,6 +334,8 @@ pub struct OcrRequest {
     pub prompt: Option<String>,
     /// Model to use for the request.
     pub model: String,
+    /// Whether to let the model zoom into image regions for fine-grained answers.
+    pub focus: Option<bool>,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
@@ -341,6 +360,7 @@ impl OcrRequest {
             mode: OcrMode::default(),
             prompt: None,
             model: model.into(),
+            focus: None,
             reasoning: None,
             temperature: None,
             top_p: None,
@@ -379,6 +399,8 @@ pub struct DetectRequest {
     pub classes: Option<Vec<String>>,
     /// Model to use for the request.
     pub model: String,
+    /// Whether to let the model zoom into image regions for fine-grained answers.
+    pub focus: Option<bool>,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
     /// Sampling temperature.
@@ -402,6 +424,7 @@ impl DetectRequest {
             media: media.into(),
             classes: None,
             model: model.into(),
+            focus: None,
             reasoning: None,
             temperature: None,
             top_p: None,

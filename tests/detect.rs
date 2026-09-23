@@ -37,8 +37,8 @@ async fn general_detection(#[case] model: &str, #[case] expected_system: &str) {
         &server,
         body_partial_json(json!({
             "model": model,
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "system", "content": expected_system},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}}
@@ -62,10 +62,8 @@ async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
-                {"role": "system", "content": expected_system}
-            ]
+            "vision_config": {"annotation_format": "box"},
+            "messages": [{"role": "system", "content": expected_system}]
         })),
         common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,400) (500,600) </point_box>"#, None),
     )
@@ -107,7 +105,7 @@ async fn multiple_detections() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"<point_box mention="person"> (50,30) (200,500) </point_box><point_box mention="car"> (400,200) (700,450) </point_box><point_box mention="tree"> (750,50) (900,500) </point_box>"#, None),
     )
     .await;
@@ -154,7 +152,7 @@ async fn collection() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"<collection mention="cat"><point_box> (10,20) (100,200) </point_box><point_box> (300,50) (500,400) </point_box></collection>"#, None),
     )
     .await;
@@ -194,8 +192,8 @@ async fn base64_media() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system"},
                 {"role": "system"},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "data:image/png;base64,imgdata"}}
@@ -218,10 +216,8 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "messages": [
-                {"role": "system", "content": "<hint>BOX THINK</hint>"},
-                {"role": "system", "content": "Your goal is to segment out the objects in the scene"}
-            ]
+            "vision_config": {"annotation_format": "box", "enable_thinking": true},
+            "messages": [{"role": "system", "content": "Your goal is to segment out the objects in the scene"}]
         })),
         common::response(single_box_content(), Some("I see a cat in the image")),
     )
@@ -232,5 +228,22 @@ async fn with_reasoning() {
 
     assert!(response.content.is_some());
     assert_eq!(response.reasoning, Some("I see a cat in the image".to_string()));
+    assert_single_cat_box(&response);
+}
+
+#[tokio::test]
+async fn with_focus() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "vision_config": {"annotation_format": "box", "internal_tools": {"focus": true}}
+        })),
+        common::response(single_box_content(), None),
+    )
+    .await;
+
+    let request = DetectRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).focus(true);
+    let response = client.detect(request).await.unwrap();
     assert_single_cat_box(&response);
 }

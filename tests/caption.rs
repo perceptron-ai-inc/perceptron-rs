@@ -40,8 +40,8 @@ async fn concise(#[case] model: &str, #[case] expected_text: &str) {
         &server,
         body_partial_json(json!({
             "model": model,
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}},
                     {"type": "text", "text": expected_text}
@@ -68,8 +68,8 @@ async fn detailed(#[case] model: &str, #[case] expected_text: &str) {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url"},
                     {"type": "text", "text": expected_text}
@@ -91,7 +91,7 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "messages": [{"role": "system", "content": "<hint>BOX THINK</hint>"}]
+            "vision_config": {"annotation_format": "box", "enable_thinking": true}
         })),
         common::response(box_content(), None),
     )
@@ -109,7 +109,7 @@ async fn multiple_boxes() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"A cat and dog <point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box>"#, None),
     )
     .await;
@@ -150,8 +150,8 @@ async fn video_modality_substitutes_prompt() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}},
                     {"type": "text", "text": "Provide a concise, human-friendly caption for the upcoming video."}
@@ -173,8 +173,8 @@ async fn base64_media() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,imgdata"}},
                     {"type": "text"}
@@ -197,7 +197,7 @@ async fn point_format() {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "messages": [{"role": "system", "content": "<hint>POINT</hint>"}]
+            "vision_config": {"annotation_format": "point"}
         })),
         common::response(r#"A cat <point mention="cat"> (150,250) </point>"#, None),
     )
@@ -228,8 +228,8 @@ async fn audio_modality_substitutes_prompt() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "audio_url", "audio_url": {"url": "https://example.com/clip.wav"}},
                     {"type": "text", "text": "Provide a concise, human-friendly description of the upcoming audio."}
@@ -241,6 +241,23 @@ async fn audio_modality_substitutes_prompt() {
     .await;
 
     let request = CaptionRequest::new("isaac-test", Audio::url("https://example.com/clip.wav"));
+    let response = client.caption(request).await.unwrap();
+    assert_single_cat_box(&response);
+}
+
+#[tokio::test]
+async fn with_focus() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "vision_config": {"annotation_format": "box", "internal_tools": {"focus": true}}
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request = CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).focus(true);
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }

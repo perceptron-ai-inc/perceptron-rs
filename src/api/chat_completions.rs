@@ -56,10 +56,44 @@ pub enum ChatCompletionContentPart {
     InputAudio(ChatCompletionContentPartInputAudio),
 }
 
+/// Annotation format the model should emit alongside text output.
+#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum AnnotationFormat {
+    Point,
+    Box,
+    Polygon,
+    Clip,
+}
+
+/// Internal-tool toggles for Perceptron vision models.
+#[derive(Debug, Serialize, Clone, Default)]
+pub struct InternalTools {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub focus: Option<bool>,
+}
+
+/// Perceptron vision-model controls, sent as the `vision_config` request field.
 #[derive(Debug, Serialize, Clone, Default)]
 pub struct VisionConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_thinking: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotation_format: Option<AnnotationFormat>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub internal_tools: Option<InternalTools>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub enable_audio_in_video: Option<bool>,
+}
+
+impl VisionConfig {
+    /// True when no field is set, so the whole object can be omitted from the request.
+    pub fn is_empty(&self) -> bool {
+        self.enable_thinking.is_none()
+            && self.annotation_format.is_none()
+            && self.internal_tools.is_none()
+            && self.enable_audio_in_video.is_none()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
