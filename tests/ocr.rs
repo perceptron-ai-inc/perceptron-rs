@@ -130,8 +130,8 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"enable_thinking": true},
             "messages": [
-                {"role": "system", "content": "<hint>THINK</hint>"},
                 {"role": "system", "content": "You are an OCR (Optical Character Recognition) system. Accurately detect, extract, and transcribe all readable text from the image."}
             ]
         })),

@@ -39,13 +39,13 @@ async fn plain(#[case] model: &str, #[case] expected_system: Option<&str>) {
 }
 
 #[tokio::test]
-async fn isaac_grounded_no_system() {
+async fn grounded_sends_annotation_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "point"},
             "messages": [
-                {"role": "system", "content": "<hint>POINT</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url"},
                     {"type": "text", "text": "Where is the cat?"}
@@ -95,8 +95,8 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"enable_thinking": true},
             "messages": [
-                {"role": "system", "content": "<hint>THINK</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url"},
                     {"type": "text", "text": "How many cats?"}
@@ -186,4 +186,54 @@ async fn enable_audio_in_video_is_sent_as_vision_config() {
     .enable_audio_in_video(true);
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("Someone says hi".to_string()));
+}
+
+#[tokio::test]
+async fn reasoning_false_is_sent_as_enable_thinking_false() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"vision_config": {"enable_thinking": false}})),
+        common::response("Three cats", None),
+    )
+    .await;
+
+    let request = QuestionRequest::new(
+        "isaac-test",
+        "How many cats?",
+        Image::url("https://example.com/img.jpg"),
+    )
+    .reasoning(false);
+    let response = client.question(request).await.unwrap();
+    assert_eq!(response.content, Some("Three cats".to_string()));
+    assert_eq!(response.reasoning, None);
+}
+
+#[tokio::test]
+async fn all_vision_config_fields_are_sent_together() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "vision_config": {
+                "enable_thinking": true,
+                "annotation_format": "clip",
+                "enable_audio_in_video": true
+            }
+        })),
+        common::response(r#"<clip mention="dog barks" t="1 2"/>"#, Some("Listening")),
+    )
+    .await;
+
+    let request = QuestionRequest::new(
+        "isaac-test",
+        "When does the dog bark?",
+        Video::url("https://example.com/vid.mp4"),
+    )
+    .output_format(OutputFormat::Clip)
+    .reasoning(true)
+    .enable_audio_in_video(true);
+    let response = client.question(request).await.unwrap();
+    assert_eq!(response.reasoning, Some("Listening".to_string()));
+    assert!(response.pointing.is_some());
 }
