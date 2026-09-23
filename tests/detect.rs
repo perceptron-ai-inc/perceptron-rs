@@ -230,20 +230,3 @@ async fn with_reasoning() {
     assert_eq!(response.reasoning, Some("I see a cat in the image".to_string()));
     assert_single_cat_box(&response);
 }
-
-#[tokio::test]
-async fn with_focus() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({
-            "vision_config": {"annotation_format": "box", "internal_tools": {"focus": true}}
-        })),
-        common::response(single_box_content(), None),
-    )
-    .await;
-
-    let request = DetectRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).focus(true);
-    let response = client.detect(request).await.unwrap();
-    assert_single_cat_box(&response);
-}

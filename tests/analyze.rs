@@ -450,19 +450,3 @@ async fn text_format_omits_annotation_format() {
     assert_eq!(response.content, Some("a cat".to_string()));
     assert_eq!(response.pointing, None);
 }
-
-#[tokio::test]
-async fn with_focus() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({"vision_config": {"internal_tools": {"focus": true}}})),
-        common::response("a tiny scratch near the hinge", None),
-    )
-    .await;
-
-    let request = test_request("test-model").focus(true);
-    let response = client.analyze(request).await.unwrap();
-
-    assert_eq!(response.content, Some("a tiny scratch near the hinge".to_string()));
-}

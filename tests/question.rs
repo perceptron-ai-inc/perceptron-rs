@@ -210,27 +210,7 @@ async fn reasoning_false_is_sent_as_enable_thinking_false() {
 }
 
 #[tokio::test]
-async fn focus_is_sent_as_internal_tools() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({"vision_config": {"internal_tools": {"focus": true}}})),
-        common::response("Serial number 8841-A", None),
-    )
-    .await;
-
-    let request = QuestionRequest::new(
-        "isaac-test",
-        "What is the serial number?",
-        Image::url("https://example.com/img.jpg"),
-    )
-    .focus(true);
-    let response = client.question(request).await.unwrap();
-    assert_eq!(response.content, Some("Serial number 8841-A".to_string()));
-}
-
-#[tokio::test]
-async fn all_vision_controls_are_sent_together() {
+async fn all_vision_config_fields_are_sent_together() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
@@ -238,7 +218,6 @@ async fn all_vision_controls_are_sent_together() {
             "vision_config": {
                 "enable_thinking": true,
                 "annotation_format": "clip",
-                "internal_tools": {"focus": false},
                 "enable_audio_in_video": true
             }
         })),
@@ -253,7 +232,6 @@ async fn all_vision_controls_are_sent_together() {
     )
     .output_format(OutputFormat::Clip)
     .reasoning(true)
-    .focus(false)
     .enable_audio_in_video(true);
     let response = client.question(request).await.unwrap();
     assert_eq!(response.reasoning, Some("Listening".to_string()));

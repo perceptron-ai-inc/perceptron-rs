@@ -148,12 +148,7 @@ impl Perceptron for PerceptronClient {
             .collect();
         let desc = RequestDescriptor {
             media: request.media,
-            vision_config: vision_config(
-                output_format,
-                request.reasoning,
-                request.focus,
-                request.enable_audio_in_video,
-            ),
+            vision_config: vision_config(output_format, request.reasoning, request.enable_audio_in_video),
             system_prompts,
             user_text: Some(request.question),
             model: request.model,
@@ -171,12 +166,7 @@ impl Perceptron for PerceptronClient {
         let output_format = request.output_format.as_ref();
         let desc = RequestDescriptor {
             media: request.media,
-            vision_config: vision_config(
-                output_format,
-                request.reasoning,
-                request.focus,
-                request.enable_audio_in_video,
-            ),
+            vision_config: vision_config(output_format, request.reasoning, request.enable_audio_in_video),
             system_prompts: Vec::new(),
             user_text: Some(request.message),
             model: request.model,
@@ -202,12 +192,7 @@ impl Perceptron for PerceptronClient {
         let user_text = Some(profile.caption.resolve_user(&request.style, &request.media).to_string());
         let desc = RequestDescriptor {
             media: request.media,
-            vision_config: vision_config(
-                Some(&output_format),
-                request.reasoning,
-                request.focus,
-                request.enable_audio_in_video,
-            ),
+            vision_config: vision_config(Some(&output_format), request.reasoning, request.enable_audio_in_video),
             system_prompts,
             user_text,
             model: request.model,
@@ -230,7 +215,7 @@ impl Perceptron for PerceptronClient {
             .or_else(|| profile.ocr.resolve_user(&request.mode).map(str::to_string));
         let desc = RequestDescriptor {
             media: request.image.into(),
-            vision_config: vision_config(None, request.reasoning, request.focus, None),
+            vision_config: vision_config(None, request.reasoning, None),
             system_prompts,
             user_text,
             model: request.model,
@@ -253,7 +238,7 @@ impl Perceptron for PerceptronClient {
         ];
         let desc = RequestDescriptor {
             media: request.media,
-            vision_config: vision_config(Some(&OutputFormat::Box), request.reasoning, request.focus, None),
+            vision_config: vision_config(Some(&OutputFormat::Box), request.reasoning, None),
             system_prompts,
             user_text: None,
             model: request.model,
@@ -273,7 +258,6 @@ impl Perceptron for PerceptronClient {
 fn vision_config(
     output_format: Option<&OutputFormat>,
     reasoning: Option<bool>,
-    focus: Option<bool>,
     enable_audio_in_video: Option<bool>,
 ) -> Option<VisionConfig> {
     let annotation_format = output_format.and_then(|format| match format {
@@ -286,7 +270,6 @@ fn vision_config(
     let config = VisionConfig {
         enable_thinking: reasoning,
         annotation_format,
-        internal_tools: focus.map(|focus| InternalTools { focus: Some(focus) }),
         enable_audio_in_video,
     };
     (!config.is_empty()).then_some(config)

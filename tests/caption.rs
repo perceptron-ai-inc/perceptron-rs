@@ -244,20 +244,3 @@ async fn audio_modality_substitutes_prompt() {
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }
-
-#[tokio::test]
-async fn with_focus() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({
-            "vision_config": {"annotation_format": "box", "internal_tools": {"focus": true}}
-        })),
-        common::response(box_content(), None),
-    )
-    .await;
-
-    let request = CaptionRequest::new("isaac-test", Image::url("https://example.com/img.jpg")).focus(true);
-    let response = client.caption(request).await.unwrap();
-    assert_single_cat_box(&response);
-}

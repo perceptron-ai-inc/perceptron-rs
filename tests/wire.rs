@@ -22,7 +22,6 @@ fn analyze_request_all_fields() {
         &AnalyzeRequest::new("model-v1", "Describe this", Image::url("https://example.com/img.jpg"))
             .output_format(OutputFormat::Point)
             .enable_audio_in_video(true)
-            .focus(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -36,7 +35,6 @@ fn analyze_request_all_fields() {
             "enable_audio_in_video": true,
             "output_format": "point",
             "model": "model-v1",
-            "focus": true,
             "reasoning": true,
             "temperature": 0.5,
             "top_p": 0.25,
@@ -55,7 +53,6 @@ fn caption_request_all_fields() {
             .style(CaptionStyle::Detailed)
             .output_format(OutputFormat::Box)
             .enable_audio_in_video(true)
-            .focus(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -69,7 +66,6 @@ fn caption_request_all_fields() {
             "style": "detailed",
             "output_format": "box",
             "model": "model-v1",
-            "focus": true,
             "reasoning": true,
             "temperature": 0.5,
             "top_p": 0.25,
@@ -86,7 +82,6 @@ fn ocr_request_all_fields() {
     roundtrip(
         &OcrRequest::new("model-v1", Image::url("https://example.com/doc.jpg"))
             .mode(OcrMode::Markdown)
-            .focus(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -98,7 +93,6 @@ fn ocr_request_all_fields() {
             "image": {"type": "url", "src": "https://example.com/doc.jpg"},
             "mode": "markdown",
             "model": "model-v1",
-            "focus": true,
             "reasoning": true,
             "temperature": 0.5,
             "top_p": 0.25,
@@ -115,7 +109,6 @@ fn detect_request_all_fields() {
     roundtrip(
         &DetectRequest::new("model-v1", Image::url("https://example.com/img.jpg"))
             .classes(vec!["cat".to_string(), "dog".to_string()])
-            .focus(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -127,7 +120,6 @@ fn detect_request_all_fields() {
             "media": {"type": "url", "modality": "image", "src": "https://example.com/img.jpg"},
             "classes": ["cat", "dog"],
             "model": "model-v1",
-            "focus": true,
             "reasoning": true,
             "temperature": 0.5,
             "top_p": 0.25,
@@ -145,7 +137,6 @@ fn question_request_all_fields() {
         &QuestionRequest::new("model-v1", "What is this?", Image::url("https://example.com/img.jpg"))
             .output_format(OutputFormat::Point)
             .enable_audio_in_video(true)
-            .focus(true)
             .reasoning(true)
             .temperature(0.5)
             .top_p(0.25)
@@ -159,7 +150,6 @@ fn question_request_all_fields() {
             "enable_audio_in_video": true,
             "output_format": "point",
             "model": "model-v1",
-            "focus": true,
             "reasoning": true,
             "temperature": 0.5,
             "top_p": 0.25,

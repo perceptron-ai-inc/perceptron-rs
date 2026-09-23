@@ -168,18 +168,3 @@ async fn custom_prompt() {
     let response = client.ocr(request).await.unwrap();
     assert_eq!(response.content, Some("2024-01-15".to_string()));
 }
-
-#[tokio::test]
-async fn with_focus() {
-    let (server, client) = common::setup().await;
-    common::mock_response(
-        &server,
-        body_partial_json(json!({"vision_config": {"internal_tools": {"focus": true}}})),
-        common::response("SN 8841-A", None),
-    )
-    .await;
-
-    let request = OcrRequest::new("isaac-test", Image::url("https://example.com/doc.jpg")).focus(true);
-    let response = client.ocr(request).await.unwrap();
-    assert_eq!(response.content, Some("SN 8841-A".to_string()));
-}
