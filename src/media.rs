@@ -210,6 +210,16 @@ impl Audio {
             data: data.into(),
         }
     }
+
+    /// Convert to a URL string for API requests.
+    ///
+    /// For `Base64` variants, constructs a `data:{mime};base64,{data}` URL.
+    pub fn to_url(&self) -> String {
+        match self {
+            Audio::Url { src } => src.clone(),
+            Audio::Base64 { format, data } => format!("data:{};base64,{}", format.mime(), data),
+        }
+    }
 }
 
 /// Media for endpoints that accept an image, a video, or an audio clip.
@@ -304,6 +314,18 @@ mod tests {
         assert_eq!(AudioFormat::Wav.mime(), "audio/wav");
         assert_eq!(AudioFormat::Mp3.mime(), "audio/mpeg");
         assert_eq!(AudioFormat::Flac.mime(), "audio/flac");
+    }
+
+    #[test]
+    fn audio_url() {
+        let clip = Audio::url("https://example.com/clip.wav");
+        assert_eq!(clip.to_url(), "https://example.com/clip.wav");
+    }
+
+    #[test]
+    fn audio_base64() {
+        let clip = Audio::base64(AudioFormat::Wav, "abc123");
+        assert_eq!(clip.to_url(), "data:audio/wav;base64,abc123");
     }
 
     #[test]

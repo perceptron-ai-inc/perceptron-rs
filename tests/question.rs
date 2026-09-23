@@ -143,13 +143,13 @@ async fn audio_url_media() {
 }
 
 #[tokio::test]
-async fn base64_audio_is_sent_as_input_audio() {
+async fn base64_audio_is_sent_as_data_url() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
         body_partial_json(json!({
             "messages": [{"role": "user", "content": [
-                {"type": "input_audio", "input_audio": {"data": "AAAA", "format": "mp3"}},
+                {"type": "audio_url", "audio_url": {"url": "data:audio/mpeg;base64,AAAA"}},
                 {"type": "text", "text": "Transcribe."}
             ]}]
         })),

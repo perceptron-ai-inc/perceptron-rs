@@ -36,24 +36,12 @@ pub struct ChatCompletionContentPartAudio {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InputAudio {
-    pub data: String,
-    pub format: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ChatCompletionContentPartInputAudio {
-    pub input_audio: InputAudio,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChatCompletionContentPart {
     Text(ChatCompletionContentPartText),
     ImageUrl(ChatCompletionContentPartImage),
     VideoUrl(ChatCompletionContentPartVideo),
     AudioUrl(ChatCompletionContentPartAudio),
-    InputAudio(ChatCompletionContentPartInputAudio),
 }
 
 #[derive(Debug, Serialize, Clone, Default)]
