@@ -3,7 +3,7 @@ use reqwest::Client;
 use crate::api::ApiClient;
 use crate::api::chat_completions::*;
 use crate::error::PerceptronError;
-use crate::media::Media;
+use crate::media::{Audio, Media};
 use crate::models::Model;
 use crate::parsing;
 use crate::prompting;
@@ -146,6 +146,7 @@ impl Perceptron for PerceptronClient {
         }
         let desc = RequestDescriptor {
             media: request.media,
+            enable_audio_in_video: request.enable_audio_in_video,
             system_prompts,
             user_text: Some(request.question),
             model: request.model,
@@ -163,6 +164,7 @@ impl Perceptron for PerceptronClient {
         let output_format = request.output_format.as_ref();
         let desc = RequestDescriptor {
             media: request.media,
+            enable_audio_in_video: request.enable_audio_in_video,
             system_prompts: system_hint(output_format, request.reasoning).into_iter().collect(),
             user_text: Some(request.message),
             model: request.model,
@@ -188,6 +190,7 @@ impl Perceptron for PerceptronClient {
         let user_text = Some(profile.caption.resolve_user(&request.style, &request.media).to_string());
         let desc = RequestDescriptor {
             media: request.media,
+            enable_audio_in_video: request.enable_audio_in_video,
             system_prompts,
             user_text,
             model: request.model,
@@ -213,6 +216,7 @@ impl Perceptron for PerceptronClient {
             .or_else(|| profile.ocr.resolve_user(&request.mode).map(str::to_string));
         let desc = RequestDescriptor {
             media: request.image.into(),
+            enable_audio_in_video: None,
             system_prompts,
             user_text,
             model: request.model,
@@ -238,6 +242,7 @@ impl Perceptron for PerceptronClient {
         );
         let desc = RequestDescriptor {
             media: request.media,
+            enable_audio_in_video: None,
             system_prompts,
             user_text: None,
             model: request.model,
@@ -278,6 +283,7 @@ fn system_hint(output_format: Option<&OutputFormat>, enable_reasoning: Option<bo
 
 struct RequestDescriptor {
     media: Media,
+    enable_audio_in_video: Option<bool>,
     system_prompts: Vec<String>,
     user_text: Option<String>,
     model: String,
@@ -305,6 +311,17 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
         Media::Video(video) => ChatCompletionContentPart::VideoUrl(ChatCompletionContentPartVideo {
             video_url: VideoUrl { url: video.to_url() },
         }),
+        Media::Audio(Audio::Url { src }) => ChatCompletionContentPart::AudioUrl(ChatCompletionContentPartAudio {
+            audio_url: AudioUrl { url: src },
+        }),
+        Media::Audio(Audio::Base64 { format, data }) => {
+            ChatCompletionContentPart::InputAudio(ChatCompletionContentPartInputAudio {
+                input_audio: InputAudio {
+                    data,
+                    format: format.to_string(),
+                },
+            })
+        }
     };
     let mut user_parts = vec![media_part];
 
@@ -325,5 +342,8 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
         top_k: desc.top_k,
         frequency_penalty: desc.frequency_penalty,
         presence_penalty: desc.presence_penalty,
+        vision_config: desc.enable_audio_in_video.map(|enable_audio_in_video| VisionConfig {
+            enable_audio_in_video: Some(enable_audio_in_video),
+        }),
     }
 }

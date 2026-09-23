@@ -1,4 +1,4 @@
-use perceptron_ai::{Image, ImageFormat, OutputFormat, Perceptron, QuestionRequest};
+use perceptron_ai::{Audio, AudioFormat, Image, ImageFormat, OutputFormat, Perceptron, QuestionRequest, Video};
 use rstest::rstest;
 use serde_json::json;
 use wiremock::matchers::body_partial_json;
@@ -116,4 +116,74 @@ async fn with_reasoning() {
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("Three cats".to_string()));
     assert_eq!(response.reasoning, Some("I count the cats".to_string()));
+}
+
+#[tokio::test]
+async fn audio_url_media() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{"role": "user", "content": [
+                {"type": "audio_url", "audio_url": {"url": "https://example.com/clip.wav"}},
+                {"type": "text", "text": "What is said?"}
+            ]}]
+        })),
+        common::response("Hello there", None),
+    )
+    .await;
+
+    let request = QuestionRequest::new(
+        "isaac-test",
+        "What is said?",
+        Audio::url("https://example.com/clip.wav"),
+    );
+    let response = client.question(request).await.unwrap();
+    assert_eq!(response.content, Some("Hello there".to_string()));
+}
+
+#[tokio::test]
+async fn base64_audio_is_sent_as_input_audio() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{"role": "user", "content": [
+                {"type": "input_audio", "input_audio": {"data": "AAAA", "format": "mp3"}},
+                {"type": "text", "text": "Transcribe."}
+            ]}]
+        })),
+        common::response("hello", None),
+    )
+    .await;
+
+    let request = QuestionRequest::new("isaac-test", "Transcribe.", Audio::base64(AudioFormat::Mp3, "AAAA"));
+    let response = client.question(request).await.unwrap();
+    assert_eq!(response.content, Some("hello".to_string()));
+}
+
+#[tokio::test]
+async fn enable_audio_in_video_is_sent_as_vision_config() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "vision_config": {"enable_audio_in_video": true},
+            "messages": [{"role": "user", "content": [
+                {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}},
+                {"type": "text", "text": "What is said in the clip?"}
+            ]}]
+        })),
+        common::response("Someone says hi", None),
+    )
+    .await;
+
+    let request = QuestionRequest::new(
+        "isaac-test",
+        "What is said in the clip?",
+        Video::url("https://example.com/vid.mp4"),
+    )
+    .enable_audio_in_video(true);
+    let response = client.question(request).await.unwrap();
+    assert_eq!(response.content, Some("Someone says hi".to_string()));
 }
