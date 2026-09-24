@@ -126,6 +126,8 @@ pub trait Perceptron {
     fn detect(&self, request: DetectRequest) -> impl Future<Output = Result<PointingResponse, PerceptronError>> + Send;
 }
 
+// The deprecated `reasoning` field still drives the THINK hint until it is removed.
+#[allow(deprecated)]
 impl Perceptron for PerceptronClient {
     async fn models(&self) -> Result<Vec<Model>, PerceptronError> {
         let resp = self.api.models().await?;

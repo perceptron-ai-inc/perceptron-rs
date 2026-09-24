@@ -68,6 +68,8 @@ pub enum ReasoningEffort {
 macro_rules! generation_param_setters {
     () => {
         /// Enable chain-of-thought reasoning.
+        #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
+        #[allow(deprecated)]
         pub fn reasoning(mut self, enable: bool) -> Self {
             self.reasoning = Some(enable);
             self
@@ -135,6 +137,7 @@ pub struct QuestionRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
     /// How much the model reasons before answering.
     pub reasoning_effort: Option<ReasoningEffort>,
@@ -154,6 +157,7 @@ pub struct QuestionRequest {
 
 impl QuestionRequest {
     /// Create a new question request with required fields.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, question: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             question: question.into(),
@@ -205,6 +209,7 @@ pub struct AnalyzeRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
     /// How much the model reasons before answering.
     pub reasoning_effort: Option<ReasoningEffort>,
@@ -224,6 +229,7 @@ pub struct AnalyzeRequest {
 
 impl AnalyzeRequest {
     /// Create a new analysis request with required fields.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, message: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             message: message.into(),
@@ -275,6 +281,7 @@ pub struct CaptionRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
     /// How much the model reasons before answering.
     pub reasoning_effort: Option<ReasoningEffort>,
@@ -294,6 +301,7 @@ pub struct CaptionRequest {
 
 impl CaptionRequest {
     /// Create a new caption request.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             media: media.into(),
@@ -350,6 +358,7 @@ pub struct OcrRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
     /// How much the model reasons before answering.
     pub reasoning_effort: Option<ReasoningEffort>,
@@ -369,6 +378,7 @@ pub struct OcrRequest {
 
 impl OcrRequest {
     /// Create a new OCR request.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, image: Image) -> Self {
         Self {
             image,
@@ -415,6 +425,7 @@ pub struct DetectRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
     /// How much the model reasons before answering.
     pub reasoning_effort: Option<ReasoningEffort>,
@@ -434,6 +445,7 @@ pub struct DetectRequest {
 
 impl DetectRequest {
     /// Create a new detection request.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             media: media.into(),

@@ -213,6 +213,7 @@ async fn base64_media() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn with_reasoning() {
     let (server, client) = common::setup().await;
     common::mock_response(
