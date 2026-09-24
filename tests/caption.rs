@@ -86,6 +86,7 @@ async fn detailed(#[case] model: &str, #[case] expected_text: &str) {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn with_reasoning() {
     let (server, client) = common::setup().await;
     common::mock_response(

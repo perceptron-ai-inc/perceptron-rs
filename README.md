@@ -7,7 +7,7 @@ Get an API key at https://platform.perceptron.inc
 ## Usage
 
 ```rust
-use perceptron_ai::{PerceptronClient, AnalyzeRequest, OutputFormat};
+use perceptron_ai::{PerceptronClient, AnalyzeRequest, OutputFormat, ReasoningEffort};
 
 #[tokio::main]
 async fn main() -> Result<(), perceptron_ai::PerceptronError> {
@@ -20,7 +20,7 @@ async fn main() -> Result<(), perceptron_ai::PerceptronError> {
         "https://example.com/image.jpg",
     )
     .output_format(OutputFormat::Point)
-    .reasoning(true)
+    .reasoning_effort(ReasoningEffort::Medium)
     .temperature(0.7);
 
     let response = client.analyze(request).await?;

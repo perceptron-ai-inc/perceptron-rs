@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::types::ReasoningEffort;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatCompletionContentPartText {
     pub text: String,
@@ -96,6 +98,8 @@ pub struct CreateChatCompletionRequest {
     pub frequency_penalty: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<ReasoningEffort>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vision_config: Option<VisionConfig>,
 }

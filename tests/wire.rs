@@ -1,6 +1,7 @@
 use perceptron_ai::{
     AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Image, ImageFormat, Modality, Model, OcrMode,
-    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, SamplingParameter, TextResponse,
+    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, ReasoningEffort, SamplingParameter,
+    TextResponse,
 };
 use serde_json::json;
 
@@ -17,12 +18,14 @@ where
 // --- Requests ---
 
 #[test]
+#[allow(deprecated)]
 fn analyze_request_all_fields() {
     roundtrip(
         &AnalyzeRequest::new("model-v1", "Describe this", Image::url("https://example.com/img.jpg"))
             .output_format(OutputFormat::Point)
             .enable_audio_in_video(true)
             .reasoning(true)
+            .reasoning_effort(ReasoningEffort::High)
             .temperature(0.5)
             .top_p(0.25)
             .top_k(50)
@@ -36,6 +39,7 @@ fn analyze_request_all_fields() {
             "output_format": "point",
             "model": "model-v1",
             "reasoning": true,
+            "reasoning_effort": "high",
             "temperature": 0.5,
             "top_p": 0.25,
             "top_k": 50,
@@ -47,6 +51,7 @@ fn analyze_request_all_fields() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn caption_request_all_fields() {
     roundtrip(
         &CaptionRequest::new("model-v1", Image::base64(ImageFormat::Jpeg, "data"))
@@ -54,6 +59,7 @@ fn caption_request_all_fields() {
             .output_format(OutputFormat::Box)
             .enable_audio_in_video(true)
             .reasoning(true)
+            .reasoning_effort(ReasoningEffort::High)
             .temperature(0.5)
             .top_p(0.25)
             .top_k(50)
@@ -67,6 +73,7 @@ fn caption_request_all_fields() {
             "output_format": "box",
             "model": "model-v1",
             "reasoning": true,
+            "reasoning_effort": "high",
             "temperature": 0.5,
             "top_p": 0.25,
             "top_k": 50,
@@ -78,11 +85,13 @@ fn caption_request_all_fields() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn ocr_request_all_fields() {
     roundtrip(
         &OcrRequest::new("model-v1", Image::url("https://example.com/doc.jpg"))
             .mode(OcrMode::Markdown)
             .reasoning(true)
+            .reasoning_effort(ReasoningEffort::High)
             .temperature(0.5)
             .top_p(0.25)
             .top_k(50)
@@ -94,6 +103,7 @@ fn ocr_request_all_fields() {
             "mode": "markdown",
             "model": "model-v1",
             "reasoning": true,
+            "reasoning_effort": "high",
             "temperature": 0.5,
             "top_p": 0.25,
             "top_k": 50,
@@ -105,11 +115,13 @@ fn ocr_request_all_fields() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn detect_request_all_fields() {
     roundtrip(
         &DetectRequest::new("model-v1", Image::url("https://example.com/img.jpg"))
             .classes(vec!["cat".to_string(), "dog".to_string()])
             .reasoning(true)
+            .reasoning_effort(ReasoningEffort::High)
             .temperature(0.5)
             .top_p(0.25)
             .top_k(50)
@@ -121,6 +133,7 @@ fn detect_request_all_fields() {
             "classes": ["cat", "dog"],
             "model": "model-v1",
             "reasoning": true,
+            "reasoning_effort": "high",
             "temperature": 0.5,
             "top_p": 0.25,
             "top_k": 50,
@@ -132,12 +145,14 @@ fn detect_request_all_fields() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn question_request_all_fields() {
     roundtrip(
         &QuestionRequest::new("model-v1", "What is this?", Image::url("https://example.com/img.jpg"))
             .output_format(OutputFormat::Point)
             .enable_audio_in_video(true)
             .reasoning(true)
+            .reasoning_effort(ReasoningEffort::High)
             .temperature(0.5)
             .top_p(0.25)
             .top_k(50)
@@ -151,6 +166,7 @@ fn question_request_all_fields() {
             "output_format": "point",
             "model": "model-v1",
             "reasoning": true,
+            "reasoning_effort": "high",
             "temperature": 0.5,
             "top_p": 0.25,
             "top_k": 50,

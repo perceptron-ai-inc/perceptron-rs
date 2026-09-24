@@ -1,4 +1,6 @@
-use perceptron_ai::{Audio, AudioFormat, Image, ImageFormat, OutputFormat, Perceptron, QuestionRequest, Video};
+use perceptron_ai::{
+    Audio, AudioFormat, Image, ImageFormat, OutputFormat, Perceptron, QuestionRequest, ReasoningEffort, Video,
+};
 use rstest::rstest;
 use serde_json::json;
 use wiremock::matchers::body_partial_json;
@@ -90,6 +92,7 @@ async fn base64_media() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn with_reasoning() {
     let (server, client) = common::setup().await;
     common::mock_response(
@@ -186,4 +189,44 @@ async fn enable_audio_in_video_is_sent_as_vision_config() {
     .enable_audio_in_video(true);
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("Someone says hi".to_string()));
+}
+
+#[tokio::test]
+async fn reasoning_effort_is_sent_top_level() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "reasoning_effort": "high",
+            "messages": [{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}},
+                {"type": "text", "text": "How many people?"}
+            ]}]
+        })),
+        common::response("Three", None),
+    )
+    .await;
+
+    let request = QuestionRequest::new(
+        "isaac-test",
+        "How many people?",
+        Image::url("https://example.com/img.jpg"),
+    )
+    .reasoning_effort(ReasoningEffort::High);
+    let response = client.question(request).await.unwrap();
+    assert_eq!(response.content, Some("Three".to_string()));
+}
+
+#[tokio::test]
+async fn reasoning_effort_absent_when_unset() {
+    let (server, client) = common::setup().await;
+    common::mock_response(&server, body_partial_json(json!({})), common::response("ok", None)).await;
+
+    let request = QuestionRequest::new("isaac-test", "Anything?", Image::url("https://example.com/img.jpg"));
+    client.question(request).await.unwrap();
+
+    let received = server.received_requests().await.unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap();
+    assert!(body.get("reasoning_effort").is_none());
+    assert!(body.get("vision_config").is_none());
 }

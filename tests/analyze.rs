@@ -360,6 +360,7 @@ async fn video_url_media() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn all_generation_params() {
     let (server, client) = common::setup().await;
     common::mock_response(

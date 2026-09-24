@@ -126,6 +126,8 @@ pub trait Perceptron {
     fn detect(&self, request: DetectRequest) -> impl Future<Output = Result<PointingResponse, PerceptronError>> + Send;
 }
 
+// The deprecated `reasoning` field still drives the THINK hint until it is removed.
+#[allow(deprecated)]
 impl Perceptron for PerceptronClient {
     async fn models(&self) -> Result<Vec<Model>, PerceptronError> {
         let resp = self.api.models().await?;
@@ -156,6 +158,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
+            reasoning_effort: request.reasoning_effort,
         };
         self.send_and_extract(build_wire_request(desc), output_format).await
     }
@@ -174,6 +177,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
+            reasoning_effort: request.reasoning_effort,
         };
         self.send_and_extract(build_wire_request(desc), output_format).await
     }
@@ -200,6 +204,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
+            reasoning_effort: request.reasoning_effort,
         };
         self.send_and_extract(build_wire_request(desc), Some(&output_format))
             .await
@@ -226,6 +231,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
+            reasoning_effort: request.reasoning_effort,
         };
         self.send(build_wire_request(desc)).await
     }
@@ -252,6 +258,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
+            reasoning_effort: request.reasoning_effort,
         };
         self.send_and_extract(build_wire_request(desc), Some(&OutputFormat::Box))
             .await
@@ -293,6 +300,7 @@ struct RequestDescriptor {
     top_k: Option<u32>,
     frequency_penalty: Option<f32>,
     presence_penalty: Option<f32>,
+    reasoning_effort: Option<ReasoningEffort>,
 }
 
 fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
@@ -334,6 +342,7 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
         top_k: desc.top_k,
         frequency_penalty: desc.frequency_penalty,
         presence_penalty: desc.presence_penalty,
+        reasoning_effort: desc.reasoning_effort,
         vision_config: desc.enable_audio_in_video.map(|enable_audio_in_video| VisionConfig {
             enable_audio_in_video: Some(enable_audio_in_video),
         }),

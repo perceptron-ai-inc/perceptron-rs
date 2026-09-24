@@ -47,12 +47,37 @@ pub enum OcrMode {
     Html,
 }
 
+/// How much the model reasons before answering. Any variant other than `None` turns reasoning on.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+pub enum ReasoningEffort {
+    /// No reasoning.
+    None,
+    /// Minimal reasoning.
+    Minimal,
+    /// Low reasoning.
+    Low,
+    /// Medium reasoning.
+    Medium,
+    /// High reasoning.
+    High,
+}
+
 /// Generate generation parameter setter methods on a request struct.
 macro_rules! generation_param_setters {
     () => {
         /// Enable chain-of-thought reasoning.
+        #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
+        #[allow(deprecated)]
         pub fn reasoning(mut self, enable: bool) -> Self {
             self.reasoning = Some(enable);
+            self
+        }
+
+        /// Set how much the model reasons before answering.
+        pub fn reasoning_effort(mut self, effort: ReasoningEffort) -> Self {
+            self.reasoning_effort = Some(effort);
             self
         }
 
@@ -112,7 +137,10 @@ pub struct QuestionRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -129,6 +157,7 @@ pub struct QuestionRequest {
 
 impl QuestionRequest {
     /// Create a new question request with required fields.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, question: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             question: question.into(),
@@ -137,6 +166,7 @@ impl QuestionRequest {
             output_format: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -179,7 +209,10 @@ pub struct AnalyzeRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -196,6 +229,7 @@ pub struct AnalyzeRequest {
 
 impl AnalyzeRequest {
     /// Create a new analysis request with required fields.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, message: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             message: message.into(),
@@ -204,6 +238,7 @@ impl AnalyzeRequest {
             output_format: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -246,7 +281,10 @@ pub struct CaptionRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -263,6 +301,7 @@ pub struct CaptionRequest {
 
 impl CaptionRequest {
     /// Create a new caption request.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             media: media.into(),
@@ -271,6 +310,7 @@ impl CaptionRequest {
             output_format: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -318,7 +358,10 @@ pub struct OcrRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -335,6 +378,7 @@ pub struct OcrRequest {
 
 impl OcrRequest {
     /// Create a new OCR request.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, image: Image) -> Self {
         Self {
             image,
@@ -342,6 +386,7 @@ impl OcrRequest {
             prompt: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -380,7 +425,10 @@ pub struct DetectRequest {
     /// Model to use for the request.
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
+    #[deprecated(since = "0.18.0", note = "use `reasoning_effort` instead")]
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -397,12 +445,14 @@ pub struct DetectRequest {
 
 impl DetectRequest {
     /// Create a new detection request.
+    #[allow(deprecated)]
     pub fn new(model: impl Into<String>, media: impl Into<Media>) -> Self {
         Self {
             media: media.into(),
             classes: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
