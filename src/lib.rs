@@ -16,5 +16,5 @@ pub use models::{Model, SamplingParameter};
 pub use pointing::{BoundingBox, Clip, ClipTimestamp, Point, Pointing, Polygon};
 pub use types::{
     AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, OcrMode, OcrRequest, OutputFormat, PointingResponse,
-    QuestionRequest, TextResponse,
+    QuestionRequest, ReasoningEffort, TextResponse,
 };

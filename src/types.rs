@@ -47,12 +47,35 @@ pub enum OcrMode {
     Html,
 }
 
+/// How much the model reasons before answering. Any variant other than `None` turns reasoning on.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+pub enum ReasoningEffort {
+    /// No reasoning.
+    None,
+    /// Minimal reasoning.
+    Minimal,
+    /// Low reasoning.
+    Low,
+    /// Medium reasoning.
+    Medium,
+    /// High reasoning.
+    High,
+}
+
 /// Generate generation parameter setter methods on a request struct.
 macro_rules! generation_param_setters {
     () => {
         /// Enable chain-of-thought reasoning.
         pub fn reasoning(mut self, enable: bool) -> Self {
             self.reasoning = Some(enable);
+            self
+        }
+
+        /// Set how much the model reasons before answering.
+        pub fn reasoning_effort(mut self, effort: ReasoningEffort) -> Self {
+            self.reasoning_effort = Some(effort);
             self
         }
 
@@ -113,6 +136,8 @@ pub struct QuestionRequest {
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -137,6 +162,7 @@ impl QuestionRequest {
             output_format: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -180,6 +206,8 @@ pub struct AnalyzeRequest {
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -204,6 +232,7 @@ impl AnalyzeRequest {
             output_format: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -247,6 +276,8 @@ pub struct CaptionRequest {
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -271,6 +302,7 @@ impl CaptionRequest {
             output_format: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -319,6 +351,8 @@ pub struct OcrRequest {
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -342,6 +376,7 @@ impl OcrRequest {
             prompt: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
@@ -381,6 +416,8 @@ pub struct DetectRequest {
     pub model: String,
     /// Whether to enable chain-of-thought reasoning.
     pub reasoning: Option<bool>,
+    /// How much the model reasons before answering.
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Sampling temperature.
     pub temperature: Option<f32>,
     /// Nucleus sampling probability.
@@ -403,6 +440,7 @@ impl DetectRequest {
             classes: None,
             model: model.into(),
             reasoning: None,
+            reasoning_effort: None,
             temperature: None,
             top_p: None,
             top_k: None,
