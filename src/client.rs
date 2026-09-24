@@ -183,10 +183,10 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn caption(&self, request: CaptionRequest) -> Result<PointingResponse, PerceptronError> {
-        // Audio has nothing to ground, so its captions default to plain text.
+        // Only image captions are grounded by default; video and audio captions are plain text.
         let default_format = match request.media {
-            Media::Audio(_) => OutputFormat::Text,
-            Media::Image(_) | Media::Video(_) => OutputFormat::Box,
+            Media::Image(_) => OutputFormat::Box,
+            Media::Video(_) | Media::Audio(_) => OutputFormat::Text,
         };
         let output_format = request.output_format.unwrap_or(default_format);
         let profile = &prompting::ISAAC;

@@ -146,24 +146,50 @@ async fn multiple_boxes() {
 }
 
 #[tokio::test]
-async fn video_modality_substitutes_prompt() {
+async fn video_defaults_to_text_with_no_hint() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
         body_partial_json(json!({
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}},
                     {"type": "text", "text": "Provide a concise, human-friendly caption for the upcoming video."}
                 ]}
             ]
         })),
-        common::response(box_content(), None),
+        common::response("A cat walks across a windowsill.", None),
     )
     .await;
 
     let request = CaptionRequest::new("isaac-test", Video::url("https://example.com/vid.mp4"));
+    let response = client.caption(request).await.unwrap();
+    assert_eq!(response.content, Some("A cat walks across a windowsill.".to_string()));
+    assert_eq!(response.pointing, None);
+
+    let received = server.received_requests().await.unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap();
+    assert_eq!(
+        body["messages"].as_array().unwrap().len(),
+        1,
+        "video captions send no hint message"
+    );
+}
+
+#[tokio::test]
+async fn video_honors_explicit_output_format() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "messages": [{"role": "system", "content": "<hint>BOX</hint>"}]
+        })),
+        common::response(box_content(), None),
+    )
+    .await;
+
+    let request =
+        CaptionRequest::new("isaac-test", Video::url("https://example.com/vid.mp4")).output_format(OutputFormat::Box);
     let response = client.caption(request).await.unwrap();
     assert_single_cat_box(&response);
 }
