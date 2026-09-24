@@ -183,7 +183,12 @@ impl Perceptron for PerceptronClient {
     }
 
     async fn caption(&self, request: CaptionRequest) -> Result<PointingResponse, PerceptronError> {
-        let output_format = request.output_format.unwrap_or(OutputFormat::Box);
+        // Audio has nothing to ground, so its captions default to plain text.
+        let default_format = match request.media {
+            Media::Audio(_) => OutputFormat::Text,
+            Media::Image(_) | Media::Video(_) => OutputFormat::Box,
+        };
+        let output_format = request.output_format.unwrap_or(default_format);
         let profile = &prompting::ISAAC;
         let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
             .into_iter()

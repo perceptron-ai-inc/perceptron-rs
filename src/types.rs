@@ -276,7 +276,7 @@ pub struct CaptionRequest {
     pub enable_audio_in_video: Option<bool>,
     /// Caption style.
     pub style: CaptionStyle,
-    /// Output format for the response (defaults to Box).
+    /// Output format for the response (defaults to Box for image and video, Text for audio).
     pub output_format: Option<OutputFormat>,
     /// Model to use for the request.
     pub model: String,
