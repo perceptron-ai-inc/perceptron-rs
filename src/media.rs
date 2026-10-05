@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-/// The modality supported by a model.
+/// An input modality a model accepts.
 #[derive(Debug, Clone, Copy, PartialEq, strum::Display, strum::EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Modality {
+    /// Text input.
+    Text,
     /// Image input.
     Image,
     /// Video input.
