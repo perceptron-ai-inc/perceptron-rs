@@ -142,13 +142,13 @@ impl Perceptron for PerceptronClient {
     async fn question(&self, request: QuestionRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.as_ref();
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(output_format, request.reasoning).into_iter().collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         if let Some(system) = profile.question.resolve_system(output_format, &request.media) {
             system_prompts.push(system.to_string());
         }
         let desc = RequestDescriptor {
             media: request.media,
-            enable_audio_in_video: request.enable_audio_in_video,
+            vision_config: vision_config(output_format, request.enable_audio_in_video),
             system_prompts,
             user_text: Some(request.question),
             model: request.model,
@@ -158,7 +158,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), output_format).await
     }
@@ -167,8 +167,8 @@ impl Perceptron for PerceptronClient {
         let output_format = request.output_format.as_ref();
         let desc = RequestDescriptor {
             media: request.media,
-            enable_audio_in_video: request.enable_audio_in_video,
-            system_prompts: system_hint(output_format, request.reasoning).into_iter().collect(),
+            vision_config: vision_config(output_format, request.enable_audio_in_video),
+            system_prompts: Vec::new(),
             user_text: Some(request.message),
             model: request.model,
             max_tokens: request.max_tokens,
@@ -177,7 +177,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), output_format).await
     }
@@ -190,16 +190,14 @@ impl Perceptron for PerceptronClient {
         };
         let output_format = request.output_format.unwrap_or(default_format);
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(Some(&output_format), request.reasoning)
-            .into_iter()
-            .collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         if let Some(system) = profile.caption.resolve_system(&request.media) {
             system_prompts.push(system.to_string());
         }
         let user_text = Some(profile.caption.resolve_user(&request.style, &request.media).to_string());
         let desc = RequestDescriptor {
             media: request.media,
-            enable_audio_in_video: request.enable_audio_in_video,
+            vision_config: vision_config(Some(&output_format), request.enable_audio_in_video),
             system_prompts,
             user_text,
             model: request.model,
@@ -209,7 +207,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), Some(&output_format))
             .await
@@ -217,7 +215,7 @@ impl Perceptron for PerceptronClient {
 
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(None, request.reasoning).into_iter().collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         if let Some(system) = profile.ocr.resolve_system() {
             system_prompts.push(system.to_string());
         }
@@ -226,7 +224,7 @@ impl Perceptron for PerceptronClient {
             .or_else(|| profile.ocr.resolve_user(&request.mode).map(str::to_string));
         let desc = RequestDescriptor {
             media: request.image.into(),
-            enable_audio_in_video: None,
+            vision_config: None,
             system_prompts,
             user_text,
             model: request.model,
@@ -236,16 +234,14 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send(build_wire_request(desc)).await
     }
 
     async fn detect(&self, request: DetectRequest) -> Result<PointingResponse, PerceptronError> {
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(Some(&OutputFormat::Box), request.reasoning)
-            .into_iter()
-            .collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         system_prompts.push(
             profile
                 .detect
@@ -253,7 +249,7 @@ impl Perceptron for PerceptronClient {
         );
         let desc = RequestDescriptor {
             media: request.media,
-            enable_audio_in_video: None,
+            vision_config: vision_config(Some(&OutputFormat::Box), None),
             system_prompts,
             user_text: None,
             model: request.model,
@@ -263,39 +259,46 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), Some(&OutputFormat::Box))
             .await
     }
 }
 
-/// Generate the hint tag for the system prompt based on output format and reasoning.
-fn system_hint(output_format: Option<&OutputFormat>, enable_reasoning: Option<bool>) -> Option<String> {
-    let mut components = Vec::new();
+/// The effort to send: `reasoning_effort` when set, else the deprecated `reasoning` flag as `high`
+/// or `none`, else nothing.
+fn reasoning_effort(effort: Option<ReasoningEffort>, reasoning: Option<bool>) -> Option<ReasoningEffort> {
+    effort.or_else(|| {
+        reasoning.map(|enabled| {
+            if enabled {
+                ReasoningEffort::High
+            } else {
+                ReasoningEffort::None
+            }
+        })
+    })
+}
 
-    match output_format {
-        Some(OutputFormat::Point) => components.push("POINT"),
-        Some(OutputFormat::Box) => components.push("BOX"),
-        Some(OutputFormat::Polygon) => components.push("POLYGON"),
-        Some(OutputFormat::Clip) => components.push("CLIP"),
-        _ => {}
-    }
-
-    if enable_reasoning.unwrap_or(false) {
-        components.push("THINK");
-    }
-
-    if components.is_empty() {
-        None
-    } else {
-        Some(format!("<hint>{}</hint>", components.join(" ")))
-    }
+/// Build the `vision_config` request field, or `None` when nothing is set so the field is omitted.
+fn vision_config(output_format: Option<&OutputFormat>, enable_audio_in_video: Option<bool>) -> Option<VisionConfig> {
+    let annotation_format = output_format.and_then(|format| match format {
+        OutputFormat::Text => None,
+        OutputFormat::Point => Some(AnnotationFormat::Point),
+        OutputFormat::Box => Some(AnnotationFormat::Box),
+        OutputFormat::Polygon => Some(AnnotationFormat::Polygon),
+        OutputFormat::Clip => Some(AnnotationFormat::Clip),
+    });
+    let config = VisionConfig {
+        annotation_format,
+        enable_audio_in_video,
+    };
+    (!config.is_empty()).then_some(config)
 }
 
 struct RequestDescriptor {
     media: Media,
-    enable_audio_in_video: Option<bool>,
+    vision_config: Option<VisionConfig>,
     system_prompts: Vec<String>,
     user_text: Option<String>,
     model: String,
@@ -348,8 +351,6 @@ fn build_wire_request(desc: RequestDescriptor) -> CreateChatCompletionRequest {
         frequency_penalty: desc.frequency_penalty,
         presence_penalty: desc.presence_penalty,
         reasoning_effort: desc.reasoning_effort,
-        vision_config: desc.enable_audio_in_video.map(|enable_audio_in_video| VisionConfig {
-            enable_audio_in_video: Some(enable_audio_in_video),
-        }),
+        vision_config: desc.vision_config,
     }
 }

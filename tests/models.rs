@@ -99,3 +99,44 @@ async fn model_not_found() {
     assert!(msg.contains("404"), "expected 404 in error: {msg}");
     assert!(msg.contains("Model not found"), "expected detail in error: {msg}");
 }
+
+#[tokio::test]
+async fn text_is_a_modality() {
+    let (server, client) = common::setup().await;
+    let mut model = sample_model("perceptron-mk1.5", "Perceptron Mk1.5");
+    model["modalities"] = json!(["text", "image", "video", "audio"]);
+
+    Mock::given(method("GET"))
+        .and(path("/v1/models/perceptron-mk1.5"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(model))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let model = client.model("perceptron-mk1.5").await.unwrap();
+    assert_eq!(
+        model.modalities,
+        vec![Modality::Text, Modality::Image, Modality::Video, Modality::Audio]
+    );
+}
+
+#[tokio::test]
+async fn values_this_version_does_not_name_are_skipped() {
+    let (server, client) = common::setup().await;
+    let mut model = sample_model("isaac-0.1", "Isaac");
+    model["modalities"] = json!(["image", "lidar"]);
+    model["output_formats"] = json!(["point", "track"]);
+    model["sampling_parameters"] = json!(["temperature", "min_p"]);
+
+    Mock::given(method("GET"))
+        .and(path("/v1/models/isaac-0.1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(model))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let model = client.model("isaac-0.1").await.unwrap();
+    assert_eq!(model.modalities, vec![Modality::Image]);
+    assert_eq!(model.output_formats, vec![OutputFormat::Point]);
+    assert_eq!(model.sampling_parameters, vec![SamplingParameter::Temperature]);
+}

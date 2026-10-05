@@ -1,4 +1,5 @@
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Deserializer};
 
 use crate::media::Modality;
 use crate::models::{Model, SamplingParameter};
@@ -14,11 +15,28 @@ pub struct ModelResponse {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
+    #[serde(deserialize_with = "known_values")]
     pub modalities: Vec<Modality>,
+    #[serde(deserialize_with = "known_values")]
     pub output_formats: Vec<OutputFormat>,
+    #[serde(deserialize_with = "known_values")]
     pub sampling_parameters: Vec<SamplingParameter>,
     pub max_context_tokens: u64,
     pub max_output_tokens: u64,
+}
+
+/// Keeps the values this crate version names and skips the rest, so a value the API adds later does
+/// not fail the whole listing.
+fn known_values<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: DeserializeOwned,
+{
+    let values = Vec::<serde_json::Value>::deserialize(deserializer)?;
+    Ok(values
+        .into_iter()
+        .filter_map(|value| serde_json::from_value(value).ok())
+        .collect())
 }
 
 impl From<ModelResponse> for Model {
