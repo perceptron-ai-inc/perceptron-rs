@@ -92,8 +92,9 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "reasoning_effort": "high",
             "vision_config": {"annotation_format": "box"},
-            "messages": [{"role": "system", "content": "<hint>THINK</hint>"}]
+            "messages": [{"role": "user"}]
         })),
         common::response(box_content(), None),
     )

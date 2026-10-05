@@ -98,8 +98,8 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "reasoning_effort": "high",
             "messages": [
-                {"role": "system", "content": "<hint>THINK</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url"},
                     {"type": "text", "text": "How many cats?"}
@@ -271,4 +271,41 @@ async fn reasoning_effort_absent_when_unset() {
     let body: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap();
     assert!(body.get("reasoning_effort").is_none());
     assert!(body.get("vision_config").is_none());
+}
+
+#[tokio::test]
+#[allow(deprecated)]
+async fn deprecated_reasoning_off_is_sent_as_effort_none() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"reasoning_effort": "none"})),
+        common::response("ok", None),
+    )
+    .await;
+
+    let request =
+        QuestionRequest::new("isaac-test", "Anything?", Image::url("https://example.com/img.jpg")).reasoning(false);
+    client.question(request).await.unwrap();
+
+    let received = server.received_requests().await.unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap();
+    assert_eq!(body["messages"].as_array().unwrap().len(), 1, "no hint message is sent");
+}
+
+#[tokio::test]
+#[allow(deprecated)]
+async fn reasoning_effort_wins_over_the_deprecated_flag() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({"reasoning_effort": "low"})),
+        common::response("ok", None),
+    )
+    .await;
+
+    let request = QuestionRequest::new("isaac-test", "Anything?", Image::url("https://example.com/img.jpg"))
+        .reasoning(true)
+        .reasoning_effort(ReasoningEffort::Low);
+    client.question(request).await.unwrap();
 }

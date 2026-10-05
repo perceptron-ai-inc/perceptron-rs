@@ -142,7 +142,7 @@ impl Perceptron for PerceptronClient {
     async fn question(&self, request: QuestionRequest) -> Result<PointingResponse, PerceptronError> {
         let output_format = request.output_format.as_ref();
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(request.reasoning).into_iter().collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         if let Some(system) = profile.question.resolve_system(output_format, &request.media) {
             system_prompts.push(system.to_string());
         }
@@ -158,7 +158,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), output_format).await
     }
@@ -168,7 +168,7 @@ impl Perceptron for PerceptronClient {
         let desc = RequestDescriptor {
             media: request.media,
             vision_config: vision_config(output_format, request.enable_audio_in_video),
-            system_prompts: system_hint(request.reasoning).into_iter().collect(),
+            system_prompts: Vec::new(),
             user_text: Some(request.message),
             model: request.model,
             max_tokens: request.max_tokens,
@@ -177,7 +177,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), output_format).await
     }
@@ -190,7 +190,7 @@ impl Perceptron for PerceptronClient {
         };
         let output_format = request.output_format.unwrap_or(default_format);
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(request.reasoning).into_iter().collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         if let Some(system) = profile.caption.resolve_system(&request.media) {
             system_prompts.push(system.to_string());
         }
@@ -207,7 +207,7 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), Some(&output_format))
             .await
@@ -215,7 +215,7 @@ impl Perceptron for PerceptronClient {
 
     async fn ocr(&self, request: OcrRequest) -> Result<TextResponse, PerceptronError> {
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(request.reasoning).into_iter().collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         if let Some(system) = profile.ocr.resolve_system() {
             system_prompts.push(system.to_string());
         }
@@ -234,14 +234,14 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send(build_wire_request(desc)).await
     }
 
     async fn detect(&self, request: DetectRequest) -> Result<PointingResponse, PerceptronError> {
         let profile = &prompting::ISAAC;
-        let mut system_prompts: Vec<String> = system_hint(request.reasoning).into_iter().collect();
+        let mut system_prompts: Vec<String> = Vec::new();
         system_prompts.push(
             profile
                 .detect
@@ -259,18 +259,25 @@ impl Perceptron for PerceptronClient {
             top_k: request.top_k,
             frequency_penalty: request.frequency_penalty,
             presence_penalty: request.presence_penalty,
-            reasoning_effort: request.reasoning_effort,
+            reasoning_effort: reasoning_effort(request.reasoning_effort, request.reasoning),
         };
         self.send_and_extract(build_wire_request(desc), Some(&OutputFormat::Box))
             .await
     }
 }
 
-/// Generate the hint tag for the system prompt when the deprecated `reasoning` flag is on.
-fn system_hint(enable_reasoning: Option<bool>) -> Option<String> {
-    enable_reasoning
-        .unwrap_or(false)
-        .then(|| "<hint>THINK</hint>".to_string())
+/// The effort to send: `reasoning_effort` when set, else the deprecated `reasoning` flag as `high`
+/// or `none`, else nothing.
+fn reasoning_effort(effort: Option<ReasoningEffort>, reasoning: Option<bool>) -> Option<ReasoningEffort> {
+    effort.or_else(|| {
+        reasoning.map(|enabled| {
+            if enabled {
+                ReasoningEffort::High
+            } else {
+                ReasoningEffort::None
+            }
+        })
+    })
 }
 
 /// Build the `vision_config` request field, or `None` when nothing is set so the field is omitted.
