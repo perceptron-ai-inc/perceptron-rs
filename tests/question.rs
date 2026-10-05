@@ -46,8 +46,8 @@ async fn isaac_grounded_no_system() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "point"},
             "messages": [
-                {"role": "system", "content": "<hint>POINT</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url"},
                     {"type": "text", "text": "Where is the cat?"}
@@ -189,6 +189,48 @@ async fn enable_audio_in_video_is_sent_as_vision_config() {
     .enable_audio_in_video(true);
     let response = client.question(request).await.unwrap();
     assert_eq!(response.content, Some("Someone says hi".to_string()));
+}
+
+#[tokio::test]
+async fn text_output_format_omits_vision_config() {
+    let (server, client) = common::setup().await;
+    common::mock_response(&server, body_partial_json(json!({})), common::response("ok", None)).await;
+
+    let request = QuestionRequest::new("isaac-test", "Anything?", Image::url("https://example.com/img.jpg"))
+        .output_format(OutputFormat::Text);
+    client.question(request).await.unwrap();
+
+    let received = server.received_requests().await.unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&received[0].body).unwrap();
+    assert!(body.get("vision_config").is_none());
+    assert_eq!(body["messages"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn annotation_format_and_audio_flag_share_vision_config() {
+    let (server, client) = common::setup().await;
+    common::mock_response(
+        &server,
+        body_partial_json(json!({
+            "vision_config": {"annotation_format": "clip", "enable_audio_in_video": true},
+            "messages": [{"role": "user", "content": [
+                {"type": "video_url", "video_url": {"url": "https://example.com/vid.mp4"}},
+                {"type": "text", "text": "When does the door open?"}
+            ]}]
+        })),
+        common::response(r#"The door opens <clip mention="door opens" t="1.0" />"#, None),
+    )
+    .await;
+
+    let request = QuestionRequest::new(
+        "isaac-test",
+        "When does the door open?",
+        Video::url("https://example.com/vid.mp4"),
+    )
+    .output_format(OutputFormat::Clip)
+    .enable_audio_in_video(true);
+    let response = client.question(request).await.unwrap();
+    assert!(response.pointing.is_some());
 }
 
 #[tokio::test]

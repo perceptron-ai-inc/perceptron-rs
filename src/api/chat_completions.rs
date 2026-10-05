@@ -46,10 +46,27 @@ pub enum ChatCompletionContentPart {
     AudioUrl(ChatCompletionContentPartAudio),
 }
 
+#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum AnnotationFormat {
+    Point,
+    Box,
+    Polygon,
+    Clip,
+}
+
 #[derive(Debug, Serialize, Clone, Default)]
 pub struct VisionConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotation_format: Option<AnnotationFormat>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub enable_audio_in_video: Option<bool>,
+}
+
+impl VisionConfig {
+    pub fn is_empty(&self) -> bool {
+        self.annotation_format.is_none() && self.enable_audio_in_video.is_none()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -72,7 +72,7 @@ async fn point_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POINT</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "point"}})),
         common::response(r#"<point mention="cat"> (100,200) </point>"#, None),
     )
     .await;
@@ -99,7 +99,7 @@ async fn box_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box>"#, None),
     )
     .await;
@@ -129,7 +129,7 @@ async fn polygon_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POLYGON</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "polygon"}})),
         common::response(r#"<polygon mention="cat"> (0,0) (100,0) (100,100) </polygon>"#, None),
     )
     .await;
@@ -156,7 +156,7 @@ async fn multiple_points() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POINT</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "point"}})),
         common::response(r#"<point mention="left eye"> (150,200) </point><point mention="right eye"> (250,200) </point><point mention="nose"> (200,280) </point>"#, None),
     )
     .await;
@@ -197,7 +197,7 @@ async fn multiple_boxes() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"<point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box><point_box mention="bird"> (600,10) (700,80) </point_box>"#, None),
     )
     .await;
@@ -244,7 +244,7 @@ async fn multiple_polygons() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POLYGON</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "polygon"}})),
         common::response(r#"<polygon mention="roof"> (100,50) (200,10) (300,50) </polygon><polygon mention="wall"> (100,50) (300,50) (300,200) (100,200) </polygon>"#, None),
     )
     .await;
@@ -277,7 +277,7 @@ async fn collection_with_inheritance() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>POINT</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "point"}})),
         common::response(r#"<collection mention="person"><point> (150,200) </point><point> (250,200) </point></collection><point mention="ball"> (500,400) </point>"#, None),
     )
     .await;

@@ -37,8 +37,8 @@ async fn general_detection(#[case] model: &str, #[case] expected_system: &str) {
         &server,
         body_partial_json(json!({
             "model": model,
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "system", "content": expected_system},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}}
@@ -62,8 +62,8 @@ async fn with_classes(#[case] model: &str, #[case] expected_system: &str) {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "system", "content": expected_system}
             ]
         })),
@@ -107,7 +107,7 @@ async fn multiple_detections() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"<point_box mention="person"> (50,30) (200,500) </point_box><point_box mention="car"> (400,200) (700,450) </point_box><point_box mention="tree"> (750,50) (900,500) </point_box>"#, None),
     )
     .await;
@@ -154,7 +154,7 @@ async fn collection() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"<collection mention="cat"><point_box> (10,20) (100,200) </point_box><point_box> (300,50) (500,400) </point_box></collection>"#, None),
     )
     .await;
@@ -194,8 +194,8 @@ async fn base64_media() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system"},
                 {"role": "system"},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "data:image/png;base64,imgdata"}}
@@ -219,8 +219,9 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX THINK</hint>"},
+                {"role": "system", "content": "<hint>THINK</hint>"},
                 {"role": "system", "content": "Your goal is to segment out the objects in the scene"}
             ]
         })),

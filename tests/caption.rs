@@ -40,8 +40,8 @@ async fn concise(#[case] model: &str, #[case] expected_text: &str) {
         &server,
         body_partial_json(json!({
             "model": model,
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "https://example.com/img.jpg"}},
                     {"type": "text", "text": expected_text}
@@ -68,8 +68,8 @@ async fn detailed(#[case] model: &str, #[case] expected_text: &str) {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url"},
                     {"type": "text", "text": expected_text}
@@ -92,7 +92,8 @@ async fn with_reasoning() {
     common::mock_response(
         &server,
         body_partial_json(json!({
-            "messages": [{"role": "system", "content": "<hint>BOX THINK</hint>"}]
+            "vision_config": {"annotation_format": "box"},
+            "messages": [{"role": "system", "content": "<hint>THINK</hint>"}]
         })),
         common::response(box_content(), None),
     )
@@ -110,7 +111,7 @@ async fn multiple_boxes() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({"messages": [{"role": "system", "content": "<hint>BOX</hint>"}]})),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(r#"A cat and dog <point_box mention="cat"> (10,20) (100,200) </point_box><point_box mention="dog"> (300,50) (500,400) </point_box>"#, None),
     )
     .await;
@@ -174,6 +175,10 @@ async fn video_defaults_to_text_with_no_hint() {
         1,
         "video captions send no hint message"
     );
+    assert!(
+        body.get("vision_config").is_none(),
+        "a text caption sets no annotation format"
+    );
 }
 
 #[tokio::test]
@@ -181,9 +186,7 @@ async fn video_honors_explicit_output_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({
-            "messages": [{"role": "system", "content": "<hint>BOX</hint>"}]
-        })),
+        body_partial_json(json!({"vision_config": {"annotation_format": "box"}})),
         common::response(box_content(), None),
     )
     .await;
@@ -200,8 +203,8 @@ async fn base64_media() {
     common::mock_response(
         &server,
         body_partial_json(json!({
+            "vision_config": {"annotation_format": "box"},
             "messages": [
-                {"role": "system", "content": "<hint>BOX</hint>"},
                 {"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,imgdata"}},
                     {"type": "text"}
@@ -223,9 +226,7 @@ async fn point_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({
-            "messages": [{"role": "system", "content": "<hint>POINT</hint>"}]
-        })),
+        body_partial_json(json!({"vision_config": {"annotation_format": "point"}})),
         common::response(r#"A cat <point mention="cat"> (150,250) </point>"#, None),
     )
     .await;
@@ -278,6 +279,10 @@ async fn audio_defaults_to_text_with_no_hint() {
         1,
         "audio captions send no hint message"
     );
+    assert!(
+        body.get("vision_config").is_none(),
+        "a text caption sets no annotation format"
+    );
 }
 
 #[tokio::test]
@@ -285,9 +290,7 @@ async fn audio_honors_explicit_output_format() {
     let (server, client) = common::setup().await;
     common::mock_response(
         &server,
-        body_partial_json(json!({
-            "messages": [{"role": "system", "content": "<hint>CLIP</hint>"}]
-        })),
+        body_partial_json(json!({"vision_config": {"annotation_format": "clip"}})),
         common::response(r#"Speech starts here <clip mention="speech" t="1.0" />"#, None),
     )
     .await;
