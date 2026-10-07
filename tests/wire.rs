@@ -1,7 +1,7 @@
 use perceptron_ai::{
     AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Image, ImageFormat, Modality, Model, OcrMode,
-    OcrRequest, OpenEnum, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, ReasoningEffort,
-    SamplingParameter, TextResponse,
+    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, ReasoningEffort, SamplingParameter,
+    TextResponse,
 };
 use serde_json::json;
 
@@ -186,11 +186,7 @@ fn model_all_fields() {
             id: "isaac-0.1".to_string(),
             name: "Isaac".to_string(),
             description: Some("A vision model".to_string()),
-            modalities: vec![
-                Modality::Image.into(),
-                Modality::Video.into(),
-                OpenEnum::Unknown("lidar".into()),
-            ],
+            modalities: vec![Modality::Image.into(), Modality::Video.into(), Modality::Audio.into()],
             output_formats: vec![
                 OutputFormat::Text.into(),
                 OutputFormat::Point.into(),
@@ -205,7 +201,7 @@ fn model_all_fields() {
             "id": "isaac-0.1",
             "name": "Isaac",
             "description": "A vision model",
-            "modalities": ["image", "video", "lidar"],
+            "modalities": ["image", "video", "audio"],
             "output_formats": ["text", "point", "box", "polygon"],
             "sampling_parameters": ["temperature", "top_p"],
             "max_context_tokens": 128000,
