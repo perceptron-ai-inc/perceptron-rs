@@ -1,6 +1,6 @@
 mod common;
 
-use perceptron_ai::{Modality, Model, OutputFormat, Perceptron, SamplingParameter};
+use perceptron_ai::{Modality, Model, OpenEnum, OutputFormat, Perceptron, SamplingParameter};
 use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
@@ -121,7 +121,7 @@ async fn text_is_a_modality() {
 }
 
 #[tokio::test]
-async fn values_this_version_does_not_name_are_skipped() {
+async fn values_this_version_does_not_name_are_kept_as_unknown() {
     let (server, client) = common::setup().await;
     let mut model = sample_model("isaac-0.1", "Isaac");
     model["modalities"] = json!(["image", "lidar"]);
@@ -136,7 +136,28 @@ async fn values_this_version_does_not_name_are_skipped() {
         .await;
 
     let model = client.model("isaac-0.1").await.unwrap();
-    assert_eq!(model.modalities, vec![Modality::Image]);
-    assert_eq!(model.output_formats, vec![OutputFormat::Point]);
-    assert_eq!(model.sampling_parameters, vec![SamplingParameter::Temperature]);
+    // The listing keeps the service's order and every value, naming the ones this crate knows.
+    assert_eq!(
+        model.modalities,
+        vec![OpenEnum::Known(Modality::Image), OpenEnum::Unknown("lidar".to_string())]
+    );
+    assert_eq!(
+        model.output_formats,
+        vec![
+            OpenEnum::Known(OutputFormat::Point),
+            OpenEnum::Unknown("track".to_string())
+        ]
+    );
+    assert_eq!(
+        model.sampling_parameters,
+        vec![
+            OpenEnum::Known(SamplingParameter::Temperature),
+            OpenEnum::Unknown("min_p".to_string())
+        ]
+    );
+    assert_eq!(model.modalities[1].to_string(), "lidar");
+    assert_eq!(
+        model.modalities.iter().filter_map(OpenEnum::known).collect::<Vec<_>>(),
+        vec![&Modality::Image]
+    );
 }

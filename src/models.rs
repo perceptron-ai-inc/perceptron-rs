@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::media::Modality;
+use crate::open_enum::OpenEnum;
 use crate::types::OutputFormat;
 
-/// A Perceptron model with metadata.
+/// A Perceptron model with metadata. The listing's enums are open: a value this crate version does
+/// not name arrives as [`OpenEnum::Unknown`] rather than failing the listing.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Model {
@@ -14,11 +16,11 @@ pub struct Model {
     /// Description of the model.
     pub description: Option<String>,
     /// Input modalities the model accepts.
-    pub modalities: Vec<Modality>,
+    pub modalities: Vec<OpenEnum<Modality>>,
     /// Output formats the model supports.
-    pub output_formats: Vec<OutputFormat>,
+    pub output_formats: Vec<OpenEnum<OutputFormat>>,
     /// Sampling parameters the model accepts.
-    pub sampling_parameters: Vec<SamplingParameter>,
+    pub sampling_parameters: Vec<OpenEnum<SamplingParameter>>,
     /// Maximum context window size in tokens.
     pub max_context_tokens: u64,
     /// Maximum output tokens the model can generate.

@@ -1,7 +1,7 @@
 use perceptron_ai::{
     AnalyzeRequest, CaptionRequest, CaptionStyle, DetectRequest, Image, ImageFormat, Modality, Model, OcrMode,
-    OcrRequest, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, ReasoningEffort, SamplingParameter,
-    TextResponse,
+    OcrRequest, OpenEnum, OutputFormat, Point, Pointing, PointingResponse, QuestionRequest, ReasoningEffort,
+    SamplingParameter, TextResponse,
 };
 use serde_json::json;
 
@@ -186,14 +186,18 @@ fn model_all_fields() {
             id: "isaac-0.1".to_string(),
             name: "Isaac".to_string(),
             description: Some("A vision model".to_string()),
-            modalities: vec![Modality::Image, Modality::Video, Modality::Audio],
-            output_formats: vec![
-                OutputFormat::Text,
-                OutputFormat::Point,
-                OutputFormat::Box,
-                OutputFormat::Polygon,
+            modalities: vec![
+                Modality::Image.into(),
+                Modality::Video.into(),
+                OpenEnum::Unknown("lidar".into()),
             ],
-            sampling_parameters: vec![SamplingParameter::Temperature, SamplingParameter::TopP],
+            output_formats: vec![
+                OutputFormat::Text.into(),
+                OutputFormat::Point.into(),
+                OutputFormat::Box.into(),
+                OutputFormat::Polygon.into(),
+            ],
+            sampling_parameters: vec![SamplingParameter::Temperature.into(), SamplingParameter::TopP.into()],
             max_context_tokens: 128000,
             max_output_tokens: 4096,
         },
@@ -201,7 +205,7 @@ fn model_all_fields() {
             "id": "isaac-0.1",
             "name": "Isaac",
             "description": "A vision model",
-            "modalities": ["image", "video", "audio"],
+            "modalities": ["image", "video", "lidar"],
             "output_formats": ["text", "point", "box", "polygon"],
             "sampling_parameters": ["temperature", "top_p"],
             "max_context_tokens": 128000,
